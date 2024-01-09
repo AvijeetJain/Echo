@@ -1,6 +1,15 @@
 import socket
 import threading
 
+def wlan_ip():
+    import subprocess
+    result=subprocess.run('ipconfig',stdout=subprocess.PIPE,text=True).stdout.lower()
+    scan=0
+    for i in result.split('\n'):
+        if 'wi-fi' in i: scan=1
+        if scan:
+            if 'ipv4' in i: return i.split(':')[1].strip()
+
 
 def send_message(address, socket):
     while True:
@@ -17,7 +26,8 @@ def receive_message(socket):
 
 
 def Main():
-    host = '192.168.171.170'  # Server ip
+    host = wlan_ip()  # Server ip
+    print(host)
     port = 4000
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
