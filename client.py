@@ -1,6 +1,15 @@
 import socket
 import threading
 
+def ip_address():
+    import subprocess
+    result=subprocess.run('ipconfig',stdout=subprocess.PIPE,text=True).stdout.lower()
+    scan=0
+    for i in result.split('\n'):
+        if 'wi-fi' in i: scan=1
+        if scan:
+            if 'ipv4' in i: return i.split(':')[1].strip()
+
 def send_message(s, server):
     while True:
         message = input("-> ")
@@ -15,7 +24,7 @@ def receive_message(s):
         print("Received from server: "+ data)
 
 def Main():
-    host = socket.gethostbyname(socket.gethostname())
+    host = ip_address()
     port = 4005
 
     server = ('192.168.171.170', 4000)
