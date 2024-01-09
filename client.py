@@ -15,7 +15,7 @@ def receive_message(s):
         print("Received from server: "+ data)
 
 def Main():
-    host = '192.168.171.59'  # client ip
+    host = socket.gethostbyname(socket.gethostname())
     port = 4005
 
     server = ('192.168.171.170', 4000)
