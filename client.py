@@ -10,31 +10,18 @@ def ip_address():
         if scan:
             if 'ipv4' in i: return i.split(':')[1].strip()
 
-# def send_message(s, server):
-#     while True:
-#         message = input("-> ")
-#         print("sending -> ", message)
-#         s.sendto(message.encode('utf-8'), server)
-
-# def receive_message(s):
-#     while True:
-#         data, addr = s.recvfrom(1024)
-#         data = data.decode('utf-8')
-#         print(str(addr))
-#         print("Received from server: "+ data)
-
-
 def send_file(s, server):
     file_path = input("Enter the path of the file to send: ")
 
     file_name = file_path.split("/")[-1]
     s.sendto(file_name.encode('utf-8'), server)
 
-    with open(file_path, 'rb') as file:
+    with open(file_path, 'r') as file:
         data = file.read(1024)
         while data:
-            s.sendto(data, server)
+            s.sendto(data.encode('utf-8'), server)
             data = file.read(1024)
+        file.close()
     print("File sent successfully")
 
 def receive_file(socket):
