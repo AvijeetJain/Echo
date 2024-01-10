@@ -21,12 +21,19 @@ def receive_file(socket):
     file_name = file_name.decode('utf-8').strip()
     print("Receiving file:", file_name)
 
-    with open(file_name, 'wb') as file:
-        while True:
-            data, addr = socket.recvfrom(1024)
-            if not data:
+    with open(file_name, 'w') as file:
+        data, addr = socket.recvfrom(1024)
+        while data:            
+            data = data.decode('utf-8').strip()
+            # data = codecs.decode(data)
+            if(data is None):
+                print("file ended")
                 break
             file.write(data)
+            file.close()
+            # file.write("Hello")
+            print("data is :", data, type(data))
+            data, addr = socket.recvfrom(1024)
 
     print("File received successfully")
 
@@ -55,8 +62,8 @@ def Main():
 
     client_address = ('192.168.171.59', 4005)  # Initialize client address
     
-    data, addr = s.recvfrom(1024)
-    client_address = addr
+    # data, addr = s.recvfrom(1024)
+    # client_address = addr
 
     receive_file(s)
     send_file(client_address, s)
