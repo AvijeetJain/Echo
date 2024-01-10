@@ -1,5 +1,6 @@
 import socket
 import threading
+import os
 
 def ip_address():
     import subprocess
@@ -15,9 +16,14 @@ def send_file(s, server):
 
     file_name = file_path.split("/")[-1]
     s.sendto(file_name.encode('utf-8'), server)
+    
+    file_size = os.path.getsize(file_path)
+    file_size = file_size/1024
+    s.sendto(str(file_size).encode('utf-8'), server)
 
     with open(file_path, 'r') as file:
         data = file.read(1024)
+        
         while data:
             s.sendto(data.encode('utf-8'), server)
             data = file.read(1024)
@@ -42,7 +48,7 @@ def Main():
     host = ip_address()
     port = 4005
 
-    server = ('192.168.171.170', 4000)
+    server = ('192.168.137.1', 4000)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
