@@ -1,6 +1,6 @@
 import socket
 import threading
-
+import math
 
 
 def send_file(s, server):
@@ -23,18 +23,19 @@ def receive_file(socket):
 
     with open(file_name, 'w') as file:
         data, addr = socket.recvfrom(1024)
-        while data:            
+        data = data.decode('utf-8').strip()
+
+        print('Blocks of file goint to be received: ', float(data))
+        for i in range(0,math.ceil(float(data))):  
+            data, addr = socket.recvfrom(1024)          
             data = data.decode('utf-8').strip()
             # data = codecs.decode(data)
             if(data is None):
                 print("file ended")
                 break
             file.write(data)
-            file.close()
-            # file.write("Hello")
-            print("data is :", data, type(data))
-            data, addr = socket.recvfrom(1024)
-
+                # print("data is :", data, type(data))
+    file.close()
     print("File received successfully")
 
 # def send_message(address, socket):
@@ -52,7 +53,7 @@ def receive_file(socket):
 
 
 def Main():
-    host = '192.168.171.170'  # Server ip
+    host = '192.168.137.1'  # Server ip
     port = 4000
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -60,7 +61,7 @@ def Main():
 
     print("Server Started")
 
-    client_address = ('192.168.171.59', 4005)  # Initialize client address
+    client_address = ('192.168.137.196', 4005)  # Initialize client address
     
     # data, addr = s.recvfrom(1024)
     # client_address = addr
