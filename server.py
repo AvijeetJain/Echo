@@ -1,6 +1,7 @@
 import socket
 import threading
 import math
+import os
 
 
 def send_file(s, server):
@@ -8,12 +9,18 @@ def send_file(s, server):
 
     file_name = file_path.split("/")[-1]
     s.sendto(file_name.encode('utf-8'), server)
+    
+    file_size = os.path.getsize(file_path)
+    file_size = file_size/10240
+    s.sendto(str(file_size).encode('utf-8'), server)
 
-    with open(file_path, 'rb') as file:
-        data = file.read(1024)
+    with open(file_path, 'rb+') as file:
+        data = file.read(10240)
+        
         while data:
             s.sendto(data, server)
-            data = file.read(1024)
+            data = file.read(10240)
+        file.close()
     print("File sent successfully")
 
 def receive_file(socket):
@@ -21,20 +28,19 @@ def receive_file(socket):
     file_name = file_name.decode('utf-8').strip()
     print("Receiving file:", file_name)
 
-    with open(file_name, 'w') as file:
-        data, addr = socket.recvfrom(1024)
-        data = data.decode('utf-8').strip()
+    file_size, addr = socket.recvfrom(1024)
+    file_size = file_size.decode('utf-8').strip()
 
-        print('Blocks of file goint to be received: ', float(data))
-        for i in range(0,math.ceil(float(data))):  
-            data, addr = socket.recvfrom(1024)          
-            data = data.decode('utf-8').strip()
-            # data = codecs.decode(data)
-            if(data is None):
-                print("file ended")
-                break
+    file_size = math.ceil(float(file_size))
+    print('Blocks of file going to be received: ', file_size)
+
+    with open(file_name, 'wb+') as file:
+        for i in range(0,file_size):  
+            data, addr = socket.recvfrom(10240)          
+            # data = data.decode('utf-8').strip()
             file.write(data)
-                # print("data is :", data, type(data))
+
+            print(i/file_size * 100, "% transfer complete")
     file.close()
     print("File received successfully")
 
@@ -66,18 +72,18 @@ def Main():
     # data, addr = s.recvfrom(1024)
     # client_address = addr
 
-    receive_file(s)
-    send_file(client_address, s)
+    # send_file(s, client_address)
+    # receive_file(s)
     
-    # receive_thread = threading.Thread(target=receive_message, args=(s,))
-    # send_thread = threading.Thread(target=send_message, args=(client_address, s))
+    receive_thread = threading.Thread(target=receive_file, args=(s,))
+    send_thread = threading.Thread(target=send_file, args=(s, client_address))
 
     
-    # receive_thread.start()
-    # send_thread.start()
+    receive_thread.start()
+    send_thread.start()
 
-    # send_thread.join()
-    # receive_thread.join()
+    send_thread.join()
+    receive_thread.join()
 
     s.close()
 
