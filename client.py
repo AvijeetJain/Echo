@@ -1,72 +1,60 @@
 import socket
-import threading
 import os
+import math
+import time
+import threading
 
-def ip_address():
-    import subprocess
-    result=subprocess.run('ipconfig',stdout=subprocess.PIPE,text=True).stdout.lower()
-    scan=0
-    for i in result.split('\n'):
-        if 'wi-fi' in i: scan=1
-        if scan:
-            if 'ipv4' in i: return i.split(':')[1].strip()
+def send_file(s, server, file_path):
+    try:
+        # file_path = input("Enter the path of the file to send: ")
+        file_name = file_path.split("/")[-1]
+        s.send(file_name.encode())
+        print("Sending file:", file_name)
 
-def send_file(s, server):
-    file_path = input("Enter the path of the file to send: ")
+        file_size = os.path.getsize(file_path)
+        file_size = str(math.ceil(file_size/1024))
+        print("File size is:", file_size)
 
-    file_name = file_path.split("/")[-1]
-    s.sendto(file_name.encode('utf-8'), server)
-    
-    file_size = os.path.getsize(file_path)
-    file_size = file_size/1024
-    s.sendto(str(file_size).encode('utf-8'), server)
-
-    with open(file_path, 'r') as file:
-        data = file.read(1024)
+        s.send(file_size.encode())
         
-        while data:
-            s.sendto(data.encode('utf-8'), server)
-            data = file.read(1024)
-        file.close()
-    print("File sent successfully")
+        #delay 1 sec
+        time.sleep(1)
 
-def receive_file(socket):
-    file_name, addr = socket.recvfrom(1024)
-    file_name = file_name.decode('utf-8').strip()
-    print("Receiving file:", file_name)
-
-    with open(file_name, 'wb') as file:
-        while True:
-            data, addr = socket.recvfrom(1024)
-            if not data:
-                break
-            file.write(data)
-
-    print("File received successfully")
+        with open(file_path, 'rb') as file:
+            while True:
+                data = file.read(1024)
+                if not data:
+                    break
+                s.send(data)
+        print("File sent successfully")
+        
+    except Exception as e:
+        print(f"Error sending file: {e}")
+    finally:
+        s.close()
+        print("Connection closed")
 
 def Main():
-    host = ip_address()
-    port = 4005
-
-    server = ('192.168.137.1', 4000)
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind((host, port))
+    host = '192.168.137.98'  
+    port = 4000
     
-    print("Server Started")
-    # send_thread = threading.Thread(target=send_message, args=(s, server))
-    # receive_thread = threading.Thread(target=receive_message, args=(s,))
+    server = (host, port)
 
-    # send_thread.start()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host, port))
+
+    print("Client Connected")
+    
+    # receive_thread = threading.Thread(target=receive_file, args=(client_socket,))
+    # send_thread = threading.Thread(target=send_file, args=(s, client_socket))
+
+    
     # receive_thread.start()
+    # send_thread.start()
 
     # send_thread.join()
     # receive_thread.join()
+    send_file(s, server, "hello.txt")
     
-    send_file(s, server)
-    receive_file(s)
-
-    s.close()
-
 if __name__ == '__main__':
     Main()
