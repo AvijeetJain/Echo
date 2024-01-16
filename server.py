@@ -25,22 +25,25 @@ import os
 
 def receive_file(socket):
     file_name = socket.recv(1024)
-    file_name = file_name.decode('utf-8').strip()
+    file_name = file_name.decode().strip()
     print("Receiving file:", file_name)
 
     file_size = socket.recv(1024)
-    file_size = file_size.decode('utf-8').strip()
+    file_size = file_size.decode().strip()
 
-    file_size = math.ceil(float(file_size))
+    file_size = int(file_size)
     print('Blocks of file going to be received: ', file_size)
 
-    with open(file_name, 'wb+') as file:
-        for i in range(0,file_size):  
-            data = socket.recv(10240)          
+    with open(file_name, 'wb') as file:
+        data = socket.recv(1024) 
+        i = 0 
+        while data:          
             # data = data.decode('utf-8').strip()
             file.write(data)
+            data = socket.recv(1024) 
 
             print(i/file_size * 100, "% transfer complete")
+            i += 1
     file.close()
     print("File received successfully")
 
@@ -59,7 +62,7 @@ def receive_file(socket):
 
 
 def Main():
-    host = '192.168.137.1'  # Server ip
+    host = '192.168.137.98'  # Server ip
     port = 4000
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -88,7 +91,7 @@ def Main():
     # send_thread.join()
     # receive_thread.join()
 
-    s.close()
+    client_socket.close()
 
 if __name__ == '__main__':
     Main()
