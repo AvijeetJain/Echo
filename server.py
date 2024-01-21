@@ -3,25 +3,33 @@ import threading
 import math
 import os
 
+# files = ['test_server.py']
 
-# def send_file(s, server):
-#     file_path = input("Enter the path of the file to send: ")
+def send_file(s, server):
+    try:
+        file_path = input("Enter the path of the file to send: ")
+        file_name = file_path.split("/")[-1]
+        print("Sending file:", file_name)
+        s.send(file_name.encode())
 
-#     file_name = file_path.split("/")[-1]
-#     s.sendto(file_name.encode('utf-8'), server)
-    
-#     file_size = os.path.getsize(file_path)
-#     file_size = file_size/10240
-#     s.sendto(str(file_size).encode('utf-8'), server)
+        file_size = os.path.getsize(file_path)
+        file_size = str(math.ceil(file_size/1024))
+        print("File size is:", file_size)
 
-#     with open(file_path, 'rb+') as file:
-#         data = file.read(10240)
+        s.send(file_size.encode())
+        #delay 1 sec
+        time.sleep(1)
+
+        with open(file_path, 'rb') as file:
+            while True:
+                data = file.read(10240)
+                if not data:
+                    break
+                s.send(data)
+        print("File sent successfully")
         
-#         while data:
-#             s.sendto(data, server)
-#             data = file.read(10240)
-#         file.close()
-#     print("File sent successfully")
+    except Exception as e:
+        print(f"Error sending file: {e}")
 
 def receive_file(socket):
     file_name = socket.recv(1024)
@@ -35,12 +43,12 @@ def receive_file(socket):
     print('Blocks of file going to be received: ', file_size)
 
     with open(file_name, 'wb') as file:
-        data = socket.recv(1024) 
+        data = socket.recv(10240) 
         i = 0 
         while data:          
             # data = data.decode('utf-8').strip()
             file.write(data)
-            data = socket.recv(1024) 
+            data = socket.recv(10240) 
 
             print(i/file_size * 100, "% transfer complete")
             i += 1
@@ -62,7 +70,7 @@ def receive_file(socket):
 
 
 def Main():
-    host = '192.168.137.98'  # Server ip
+    host = '192.168.137.1'  # Server ip
     port = 4000
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -73,25 +81,25 @@ def Main():
 
     print("Server Started")
 
-    # client_address = ('192.168.137.196', 4005)  # Initialize client address
+    client_address = ('192.168.137.231', 4005)  # Initialize client address
     
     # data, addr = s.recvfrom(1024)
     # client_address = addr
 
-    # send_file(s, client_address)
-    receive_file(client_socket)
+    send_file(s, client_address)
+    # receive_file(client_socket)
     
     # receive_thread = threading.Thread(target=receive_file, args=(client_socket,))
     # send_thread = threading.Thread(target=send_file, args=(s, client_socket))
 
     
     # receive_thread.start()
-    # send_thread.start()
 
     # send_thread.join()
     # receive_thread.join()
 
-    client_socket.close()
+    # Close the socket after all files are sent
+    s.close()
 
 if __name__ == '__main__':
     Main()
