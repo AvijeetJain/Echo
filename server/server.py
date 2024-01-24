@@ -3,6 +3,7 @@ import threading
 import time
 import math
 import os
+from utils.data.peers import peers
 
 # files = ['test_server.py']
 
@@ -68,6 +69,25 @@ def receive_file(socket):
 #         data = data.decode('utf-8')
 #         print("Received from: " + str(addr))
 #         print("From connected user: " + data)
+
+# function to start server and connect to 10 clients and return list of ip addresses of clients
+def start_server():
+    host = ''
+    port = 4000
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((host, port))
+    s.listen(10)
+
+    connected_peers = []
+
+    for i in range(10):
+        client_socket, addr = s.accept()
+        connected_peers.append(peers(addr, client_socket))
+
+    print("Server Started")
+
+    return connected_peers
 
 
 def Main():
