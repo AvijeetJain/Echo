@@ -11,6 +11,7 @@ def receive_chat(client_socket):
             print(f"Received message: {message}")
     except Exception as e:
         print(f"Error receiving chat message: {e}")
+        break
 
 def send_chat(client_socket):
     try:
@@ -19,6 +20,7 @@ def send_chat(client_socket):
             client_socket.send(message.encode('utf-8'))
     except Exception as e:
         print(f"Error sending chat message: {e}")
+        break
 
 def receive_file(client_socket, download_path):
     try:
