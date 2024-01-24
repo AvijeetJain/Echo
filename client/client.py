@@ -52,7 +52,21 @@ def send_file(client_socket, file_path):
     except Exception as e:
         print(f"Error sending file: {e}")
     
-
+def request_file(client_socket, file_path):
+    try:
+        file_name = os.path.basename(file_path)
+        client_socket.send(file_name.encode('utf-8'))
+        print("Requesting file...")
+        with open(file_path, 'wb') as file:
+            while True:
+                data = client_socket.recv(1024)
+                if not data:
+                    break
+                file.write(data)
+        print("File received")
+    except Exception as e:
+        print(f"Error requesting file: {e}")
+        
 def main():
     host = '192.168.0.196'
     port_chat = 5555

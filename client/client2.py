@@ -13,20 +13,38 @@ def receive_chat(client_socket):
         print(f"Error receiving chat message: {e}") 
 
 def send_chat(client_socket):
+    
     try:
         while True:
             message = input("Enter your message: ")
             client_socket.send(message.encode('utf-8'))
+            
+            type = message.split('@')[0]
+            if(type == 'download'):
+                receive_file( 'downloads')
     except Exception as e:
         print(f"Error sending chat message: {e}") 
+        
+        
 
-def receive_file(client_socket, download_path):
+def receive_file( download_path):
+    host = '192.168.0.192'
+    port_file = 5556
+    file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # file_socket.bind((host, port_file))
+    # file_socket.listen(1)
+    
+    file_socket.connect(('192.168.0.196', 5556))
+    
+    # print(f"File server listening on {host}:{port_file}")
+    print('File server connected')
+    
     try:
-        file_name = client_socket.recv(1024).decode('utf-8')
+        file_name = file_socket.recv(1024).decode('utf-8')
         file_path = os.path.join(download_path, file_name)
         with open(file_path, 'wb') as file:
             while True:
-                data = client_socket.recv(1024)
+                data = file_socket.recv(1024)
                 if not data:
                     break
                 file.write(data)
@@ -63,25 +81,25 @@ def main():
 
     print(f"Chat server listening on {host}:{port_chat}")
 
-    file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # file_socket.bind((host, port_file))
     # file_socket.listen()
 
-    print(f"File server listening on {host}:{port_file}")
+    # print(f"File server listening on {host}:{port_file}")
 
 
     try:
-        chat_server = (receiver_ip, 5555)
+        chat_server = (receiver_ip, port_chat)
         chat_socket.connect(chat_server)
     except Exception as e:
         print(f"Error connecting to chat server: {e}")
 
 
-    try:
-        file_server = (receiver_ip, 5556)
-        file_socket.connect(file_server) 
-    except Exception as e:
-        print(f"Error connecting to file server: {e}")
+    # try:
+    #     file_server = (receiver_ip, 5556)
+    #     file_socket.connect(file_server) 
+    # except Exception as e:
+    #     print(f"Error connecting to file server: {e}")
 
     # chat_socket, chat_addr = chat_socket.accept()
     # file_socket, file_addr = file_socket.accept()
@@ -91,21 +109,21 @@ def main():
 
     chat_receive_thread = threading.Thread(target=receive_chat, args=(chat_socket,))
     chat_send_thread = threading.Thread(target=send_chat, args=(chat_socket,))
-    file_receive_thread = threading.Thread(target=receive_file, args=(file_socket, 'downloads'))
-    file_send_thread = threading.Thread(target=send_file, args=(file_socket, './public/Resume.pdf'))
+    # file_receive_thread = threading.Thread(target=receive_file, args=(file_socket, 'downloads'))
+    # file_send_thread = threading.Thread(target=send_file, args=(file_socket, './public/Resume.pdf'))
 
     chat_receive_thread.start()
     chat_send_thread.start()
-    file_receive_thread.start()
-    file_send_thread.start()
+    # file_receive_thread.start()
+    # file_send_thread.start()
 
     chat_receive_thread.join()
     chat_send_thread.join()
-    file_receive_thread.join()
-    file_send_thread.join()
+    # file_receive_thread.join()
+    # file_send_thread.join()
 
     chat_socket.close()
-    file_socket.close()
+    # file_socket.close()
 
 if __name__ == "__main__":
     main()
