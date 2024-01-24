@@ -37,12 +37,13 @@ def start_p2p_chat(peer_address, local_port):
     send_thread.join()
 
 if __name__ == '__main__':
-    local_port = 5000  # Adjust the local port for each peer
-
+    local_port1 = 5000  # Adjust the local port for each peer
+    local_port2 = 5001
+    
     # Example peer addresses (replace with actual addresses)
     peer1_address = ('192.168.0.192', 5000)
-    peer2_address = ('192.168.0.196', 5000)
+    peer2_address = ('192.168.0.196', 5001)
 
     # Start P2P chat for each peer
-    threading.Thread(target=start_p2p_chat, args=(peer1_address, local_port)).start()
-    threading.Thread(target=start_p2p_chat, args=(peer2_address, local_port)).start()
+    threading.Thread(target=start_p2p_chat, args=(peer1_address, local_port1)).start()
+    threading.Thread(target=start_p2p_chat, args=(peer2_address, local_port2)).start()
