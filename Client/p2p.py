@@ -48,11 +48,11 @@ def send_file(socket_socket, file_path):
         print(f"Error sending file: {e}")
 
 def main():
-    host = '192.168.137.231'
+    host = '192.168.0.192'
     port_chat = 5555
     port_file = 5556
 
-    receiver_ip = '192.168.137.1'
+    receiver_ip = '192.168.0.196'
 
     chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # chat_socket.bind((host, port_chat))
@@ -89,7 +89,7 @@ def main():
     chat_receive_thread = threading.Thread(target=receive_chat, args=(chat_socket,))
     chat_send_thread = threading.Thread(target=send_chat, args=(chat_socket,))
     file_receive_thread = threading.Thread(target=receive_file, args=(file_socket,))
-    file_send_thread = threading.Thread(target=send_file, args=(file_socket, 'NikhilResume.pdf'))
+    file_send_thread = threading.Thread(target=send_file, args=(file_socket, './Public/Resume.pdf'))
 
     chat_receive_thread.start()
     chat_send_thread.start()
