@@ -55,28 +55,36 @@ def main():
     receiver_ip = '192.168.137.1'
 
     chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    chat_server = (receiver_ip, 5555)
-    chat_socket.connect(chat_server)
-    chat_socket.bind((host, port_chat))
-    chat_socket.listen()
+    # chat_socket.bind((host, port_chat))
+    # chat_socket.listen()
 
     print(f"Chat server listening on {host}:{port_chat}")
 
     file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    file_server = (receiver_ip, 5556)
-    file_socket.connect(file_server) 
-    file_socket.bind((host, port_file))
-    file_socket.listen()
+    # file_socket.bind((host, port_file))
+    # file_socket.listen()
 
     print(f"File server listening on {host}:{port_file}")
-    
-      
 
-    chat_socket, chat_addr = chat_socket.accept()
-    file_socket, file_addr = file_socket.accept()
 
-    print(f"Chat connection established with {chat_addr}")
-    print(f"File connection established with {file_addr}")
+    try:
+        chat_server = (receiver_ip, 5555)
+        chat_socket.connect(chat_server)
+    except Exception as e:
+        print(f"Error connecting to chat server: {e}")
+
+
+    try:
+        file_server = (receiver_ip, 5556)
+        file_socket.connect(file_server) 
+    except Exception as e:
+        print(f"Error connecting to file server: {e}")
+
+    # chat_socket, chat_addr = chat_socket.accept()
+    # file_socket, file_addr = file_socket.accept()
+
+    # print(f"Chat connection established with {chat_addr}")
+    # print(f"File connection established with {file_addr}")
 
     chat_receive_thread = threading.Thread(target=receive_chat, args=(chat_socket,))
     chat_send_thread = threading.Thread(target=send_chat, args=(chat_socket,))
