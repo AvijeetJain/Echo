@@ -1,121 +1,94 @@
 import socket
-import os
-import math
-import time
 import threading
+import os
 
-files= ['AboutTime.zip']
+def receive_chat(client_socket):
+    while True:
+        try:
+            message = client_socket.recv(1024).decode('utf-8')
+            if not message:
+                break
+            print(f"Received message: {message}")
+        except Exception as e:
+            print(f"Error receiving chat message: {e}")
+            break
 
-def send_file(s, server, file_path):
+def send_chat(client_socket):
+    while True:
+        message = input("Enter your message: ")
+        try:
+            client_socket.send(message.encode('utf-8'))
+        except Exception as e:
+            print(f"Error sending chat message: {e}")
+            break
+
+def receive_file(client_socket):
+    file_name = client_socket.recv(1024).decode('utf-8')
     try:
-        # file_path = input("Enter the path of the file to send: ")
-        file_name = file_path.split("/")[-1]
-        s.send(file_name.encode())
-        print("Sending file:", file_name)
-
-        file_size = os.path.getsize(file_path)
-        file_size = str(math.ceil(file_size/10240))
-        print("File size is:", file_size)
-
-        s.send(file_size.encode())
-        #delay 1 sec
-        time.sleep(1)
-
-        with open(file_path, 'rb') as file:
+        with open(file_name, 'wb') as file:
             while True:
-                data = file.read(10240)
+                data = client_socket.recv(1024)
                 if not data:
                     break
-                s.send(data)
-        print("File sent successfully")
-        
+                file.write(data)
+    except Exception as e:
+        print(f"Error receiving file: {e}")
+
+def send_file(client_socket, file_path):
+    file_name = os.path.basename(file_path)
+    try:
+        client_socket.send(file_name.encode('utf-8'))
+        print("Sending file...")
+        with open(file_path, 'rb') as file:
+            while True:
+                data = file.read(1024)
+                if not data:
+                    break
+                client_socket.send(data)
+            print("File sent")
     except Exception as e:
         print(f"Error sending file: {e}")
-    # finally:
-    #     s.close()
-    #     print("Connection closed")
-        
-# def receive_file(socket):
-#     file_name = socket.recv(1024)
-#     file_name = file_name.decode().strip()
-#     print("Receiving file:", file_name)
 
-#     file_size = socket.recv(1024)
-#     file_size = file_size.decode().strip()
+def main():
+    host = '192.168.0.196'
+    port_chat = 5555
+    port_file = 5556
 
-#     file_size = int(file_size)
-#     print('Blocks of file going to be received: ', file_size)
+    chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    chat_socket.bind((host, port_chat))
+    chat_socket.listen()
 
-#     with open(file_name, 'wb') as file:
-#         data = socket.recv(1024) 
-#         i = 0 
-#         while data:          
-#             # data = data.decode('utf-8').strip()
-#             file.write(data)
-#             data = socket.recv(1024) 
+    print(f"Chat server listening on {host}:{port_chat}")
 
-#             print(i/file_size * 100, "% transfer complete")
-#             i += 1
-#     file.close()
-#     print("File received successfully")
+    file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    file_socket.bind((host, port_file))
+    file_socket.listen()
 
-def receive_file(socket):
-    file_name = socket.recv(1024)
-    file_name = file_name.decode().strip()
-    print("Receiving file:", file_name)
+    print(f"File server listening on {host}:{port_file}")
 
-    file_size = socket.recv(1024)
-    file_size = file_size.decode().strip()
+    chat_client, chat_addr = chat_socket.accept()
+    file_client, file_addr = file_socket.accept()
 
-    file_size = int(file_size)
-    print('Blocks of file going to be received: ', file_size)
+    print(f"Chat connection established with {chat_addr}")
+    print(f"File connection established with {file_addr}")
 
-    with open(file_name, 'wb') as file:
-        data = socket.recv(10240) 
-        i = 0 
-        while data:          
-            # data = data.decode('utf-8').strip()
-            file.write(data)
-            data = socket.recv(10240) 
+    chat_receive_thread = threading.Thread(target=receive_chat, args=(chat_client,))
+    chat_send_thread = threading.Thread(target=send_chat, args=(chat_client,))
+    file_receive_thread = threading.Thread(target=receive_file, args=(file_client,))
+    file_send_thread = threading.Thread(target=send_file, args=(file_client, './Public/hello.txt'))
 
-            print(i/file_size * 100, "% transfer complete")
-            i += 1
-    file.close()
-    print("File received successfully")
+    chat_receive_thread.start()
+    chat_send_thread.start()
+    file_receive_thread.start()
+    file_send_thread.start()
 
-def Main():
-    host = '192.168.137.1'  
-    port = 4005
-    
-    server = ('192.168.137.1', 4000)
+    chat_receive_thread.join()
+    chat_send_thread.join()
+    file_receive_thread.join()
+    file_send_thread.join()
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # s.bind((host, port))
-    s.connect(server)
+    chat_socket.close()
+    file_socket.close()
 
-    print("Client Connected")
-    
-    # # receive_thread = threading.Thread(target=receive_file, args=(server,))
-    # # send_thread = threading.Thread(target=send_file, args=(s, server))
-
-    # # send_thread.start()
-    # # receive_thread.start()
-
-    # # send_thread.join()
-    # # receive_thread.join()
-    # for file_path in files:
-    #     send_thread = threading.Thread(target=send_file, args=(s, server, file_path))
-    #     # receive_thread = threading.Thread(target=receive_file, args=(s,))
-
-    #     send_thread.start()
-    #     # receive_thread.start()
-
-    #     send_thread.join()
-    #     time.sleep(1)
-    #     # receive_thread.join()
-    
-    send_file(s, server, "AboutTime.mkv")
-    # receive_file(s)
-    
-if __name__ == '__main__':
-    Main()
+if __name__ == "__main__":
+    main()
