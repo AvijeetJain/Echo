@@ -24,13 +24,16 @@ def send_chat(socket_socket):
 
 def receive_file(socket_socket):
     file_name = socket_socket.recv(1024).decode('utf-8')
+    download_path = os.path.join("downloads", file_name)
+
     try:
-        with open(file_name, 'wb') as file:
+        with open(download_path, 'wb') as file:
             while True:
                 data = socket_socket.recv(1024)
                 if not data:
                     break
                 file.write(data)
+        print(f"File received and saved at: {download_path}")
     except Exception as e:
         print(f"Error receiving file: {e}")
 
