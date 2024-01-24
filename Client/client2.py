@@ -2,51 +2,51 @@ import socket
 import threading
 import os
 
-def receive_chat(socket_socket):
-    while True:
-        try:
-            message = socket_socket.recv(1024).decode('utf-8')
+def receive_chat(client_socket):
+    try:
+        while True:
+            message = client_socket.recv(1024).decode('utf-8')
             if not message:
                 break
             print(f"Received message: {message}")
-        except Exception as e:
-            print(f"Error receiving chat message: {e}")
-            break
+    except Exception as e:
+        print(f"Error receiving chat message: {e}") 
 
-def send_chat(socket_socket):
-    while True:
-        message = input("Enter your message: ")
-        try:
-            socket_socket.send(message.encode('utf-8'))
-        except Exception as e:
-            print(f"Error sending chat message: {e}")
-            break
-
-def receive_file(socket_socket):
-    file_name = socket_socket.recv(1024).decode('utf-8')
-    download_path = os.path.join("downloads", file_name)
-
+def send_chat(client_socket):
     try:
-        with open(download_path, 'wb') as file:
+        while True:
+            message = input("Enter your message: ")
+            client_socket.send(message.encode('utf-8'))
+    except Exception as e:
+        print(f"Error sending chat message: {e}") 
+
+def receive_file(client_socket, download_path):
+    try:
+        file_name = client_socket.recv(1024).decode('utf-8')
+        file_path = os.path.join(download_path, file_name)
+        with open(file_path, 'wb') as file:
             while True:
-                data = socket_socket.recv(1024)
+                data = client_socket.recv(1024)
                 if not data:
                     break
                 file.write(data)
-        print(f"File received and saved at: {download_path}")
+        print(f"File received and saved at: {file_path}")
     except Exception as e:
         print(f"Error receiving file: {e}")
+    
 
-def send_file(socket_socket, file_path):
-    file_name = os.path.basename(file_path)
+def send_file(client_socket, file_path):
     try:
-        socket_socket.send(file_name.encode('utf-8'))
+        file_name = os.path.basename(file_path)
+        client_socket.send(file_name.encode('utf-8'))
+        print("Sending file...")
         with open(file_path, 'rb') as file:
             while True:
                 data = file.read(1024)
                 if not data:
                     break
-                socket_socket.send(data)
+                client_socket.send(data)
+        print("File sent")
     except Exception as e:
         print(f"Error sending file: {e}")
 
@@ -91,8 +91,8 @@ def main():
 
     chat_receive_thread = threading.Thread(target=receive_chat, args=(chat_socket,))
     chat_send_thread = threading.Thread(target=send_chat, args=(chat_socket,))
-    file_receive_thread = threading.Thread(target=receive_file, args=(file_socket,))
-    file_send_thread = threading.Thread(target=send_file, args=(file_socket, './Public/Resume.pdf'))
+    file_receive_thread = threading.Thread(target=receive_file, args=(file_socket, 'downloads'))
+    file_send_thread = threading.Thread(target=send_file, args=(file_socket, './public/Resume.pdf'))
 
     chat_receive_thread.start()
     chat_send_thread.start()
