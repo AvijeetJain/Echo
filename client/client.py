@@ -82,8 +82,39 @@ def receive_file(client_socket, download_path):
         print(f"Error receiving file: {e}")
     
 
-def send_file(file_path):
-    global host
+def send_file(client_socket, file_path):
+    try:
+        file_name = os.path.basename(file_path)
+        client_socket.send(file_name.encode('utf-8'))
+        print("Sending file...")
+        with open(file_path, 'rb') as file:
+            while True:
+                data = file.read(1024)
+                if not data:
+                    break
+                client_socket.send(data)
+        print("File sent")
+    except Exception as e:
+        print(f"Error sending file: {e}")
+    
+def request_file(client_socket, file_path):
+    try:
+        file_name = os.path.basename(file_path)
+        client_socket.send(file_name.encode('utf-8'))
+        print("Requesting file...")
+        with open(file_path, 'wb') as file:
+            while True:
+                data = client_socket.recv(1024)
+                if not data:
+                    break
+                file.write(data)
+        print("File received")
+    except Exception as e:
+        print(f"Error requesting file: {e}")
+        
+def main():
+    host = '192.168.0.196'
+    port_chat = 5555
     port_file = 5556
 
     file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
