@@ -512,7 +512,7 @@ class Ui_MainWindow(object):
 
     def main(self):
         global host
-        host = '127.0.0.1'
+        host = '192.168.69.241'
         port_chat = 5555
         # port_file = 5556
 
@@ -534,25 +534,25 @@ class Ui_MainWindow(object):
         print(f"Chat connection established with {chat_addr}")
         # print(f"File connection established with {file_addr}")
 
-        chat_receive_thread = threading.Thread(target=self.receive_chat, args=(chat_client,))
+        # chat_receive_thread = threading.Thread(target=self.receive_chat, args=(chat_client,))
         # chat_send_thread = threading.Thread(target=self.send_chat, args=(chat_client,))
         # file_receive_thread = threading.Thread(target=receive_file, args=(file_client, 'downloads'))
         # file_send_thread = threading.Thread(target=send_file, args=(file_client, './public/hello.txt'))
 
-        chat_receive_thread.start()
+        # chat_receive_thread.start()
         # chat_send_thread.start()
         # file_receive_thread.start()
         # file_send_thread.start()
 
         # Wait for threads to finish
-        chat_receive_thread.join()
+        # chat_receive_thread.join()
         # chat_send_thread.join()
         # file_receive_thread.join()
         # file_send_thread.join()
 
-        self.textEdit.clear()
-        self.pushButton_3.clicked.connect(lambda: self.send_chat(chat_socket))
-        self.pushButton_6.clicked.connect(lambda: self.thread(chat_socket))
+        # self.textEdit.clear()
+        self.pushButton_3.clicked.connect(lambda: self.send_chat(chat_client))
+        self.pushButton_6.clicked.connect(lambda: self.thread(chat_client))
         # self.pushButton_6.clicked.connect(self.send_file('./public/Resume.pdf'))
 
         # while True:
