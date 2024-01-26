@@ -334,12 +334,13 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
         self.main()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Drizzle"))
-        self.label_3.setText(_translate("MainWindow", "Drizzle / john_doe_"))
+        self.label_3.setText(_translate("MainWindow", "Drizzle / Sender"))
         self.pushButton_2.setText(_translate("MainWindow", "Add Files"))
         self.pushButton.setText(_translate("MainWindow", "Settings"))
         self.label.setText(_translate("MainWindow", "Browse Files"))
@@ -418,7 +419,11 @@ class Ui_MainWindow(object):
         
         return Files
 
-    def receive_chat(client_socket):
+    def thread(self, chat_socket): 
+        t1 = threading.Thread(target=self.receive_chat, args=(chat_socket,))
+        t1.start()
+
+    def receive_chat(self,client_socket):
         try:
             while True:
                 message = client_socket.recv(1024).decode('utf-8')
@@ -456,11 +461,10 @@ class Ui_MainWindow(object):
 
     def send_chat(self, client_socket):
         try:
-            if(self.pushButton_3.clicked):
-                message = self.plainTextEdit.toPlainText()
-                client_socket.send(message.encode('utf-8'))
-                self.textEdit.append("You: " + message)
-                self.plainTextEdit.clear()
+            message = self.plainTextEdit.toPlainText()
+            client_socket.send(message.encode('utf-8'))
+            self.textEdit.append("You: " + message)
+            self.plainTextEdit.clear()
         except Exception as e:
             print(f"Error sending chat message: {e}")
 
@@ -508,7 +512,7 @@ class Ui_MainWindow(object):
 
     def main(self):
         global host
-        host = '192.168.0.196'
+        host = '127.0.0.1'
         port_chat = 5555
         # port_file = 5556
 
@@ -530,24 +534,32 @@ class Ui_MainWindow(object):
         print(f"Chat connection established with {chat_addr}")
         # print(f"File connection established with {file_addr}")
 
-        chat_receive_thread = threading.Thread(target=receive_chat, args=(chat_client,))
-        chat_send_thread = threading.Thread(target=send_chat, args=(chat_client,))
+        chat_receive_thread = threading.Thread(target=self.receive_chat, args=(chat_client,))
+        # chat_send_thread = threading.Thread(target=self.send_chat, args=(chat_client,))
         # file_receive_thread = threading.Thread(target=receive_file, args=(file_client, 'downloads'))
         # file_send_thread = threading.Thread(target=send_file, args=(file_client, './public/hello.txt'))
 
         chat_receive_thread.start()
-        chat_send_thread.start()
+        # chat_send_thread.start()
         # file_receive_thread.start()
         # file_send_thread.start()
 
         # Wait for threads to finish
         chat_receive_thread.join()
-        chat_send_thread.join()
+        # chat_send_thread.join()
         # file_receive_thread.join()
         # file_send_thread.join()
 
+        self.textEdit.clear()
+        self.pushButton_3.clicked.connect(lambda: self.send_chat(chat_socket))
+        self.pushButton_6.clicked.connect(lambda: self.thread(chat_socket))
+        # self.pushButton_6.clicked.connect(self.send_file('./public/Resume.pdf'))
+
+        # while True:
+        #     self.receive_chat(chat_socket)
+
         # Close sockets
-        chat_socket.close()
+        # chat_socket.close()
         # file_socket.close()
 
 
