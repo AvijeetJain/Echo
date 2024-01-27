@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Drizzle</string>
+   <string>Echo</string>
   </property>
   <property name="unifiedTitleAndToolBarOnMac">
    <bool>false</bool>
