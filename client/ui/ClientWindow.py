@@ -530,7 +530,6 @@ class Ui_MainWindow(object):
         # print(f"File server listening on {host}:{port_file}")
 
 
-
         # try:
         chat_server = (receiver_ip, port_chat)
         chat_socket.connect(chat_server)
