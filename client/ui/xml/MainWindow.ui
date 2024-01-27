@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Drizzle</string>
+   <string>Echo</string>
   </property>
   <property name="unifiedTitleAndToolBarOnMac">
    <bool>false</bool>
@@ -62,7 +62,7 @@
            </font>
           </property>
           <property name="text">
-           <string>Drizzle / john_doe_</string>
+           <string>Echo / john_doe_</string>
           </property>
           <property name="margin">
            <number>0</number>
@@ -685,7 +685,7 @@ p, li { white-space: pre-wrap; }
   </widget>
  </widget>
  <resources>
-  <include location="Drizzle-main/src/client/ui/xml/res/userstatus.qrc"/>
+  <include location="./client/ui/xml/res/userstatus.qrc"/>
  </resources>
  <connections/>
 </ui>

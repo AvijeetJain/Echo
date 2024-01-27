@@ -339,8 +339,8 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Drizzle"))
-        self.label_3.setText(_translate("MainWindow", "Drizzle / Sender"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Echo"))
+        self.label_3.setText(_translate("MainWindow", "Echo / Sender"))
         self.pushButton_2.setText(_translate("MainWindow", "Add Files"))
         self.pushButton.setText(_translate("MainWindow", "Settings"))
         self.label.setText(_translate("MainWindow", "Browse Files"))
