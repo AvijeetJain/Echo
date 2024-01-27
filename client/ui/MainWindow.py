@@ -550,7 +550,8 @@ class Ui_MainWindow(object):
         # file_receive_thread.join()
         # file_send_thread.join()
 
-        # self.textEdit.clear()
+        self.textEdit.clear()
+        
         self.pushButton_3.clicked.connect(lambda: self.send_chat(chat_client))
         self.pushButton_6.clicked.connect(lambda: self.thread(chat_client))
         # self.pushButton_6.clicked.connect(self.send_file('./public/Resume.pdf'))
