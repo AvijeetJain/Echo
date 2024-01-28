@@ -34,7 +34,7 @@ def receive_file( download_path):
     # file_socket.bind((host, port_file))
     # file_socket.listen(1)
     
-    file_socket.connect(('192.168.0.196', 5556))
+    file_socket.connect(('192.168.68.241', 5556))
     
     # print(f"File server listening on {host}:{port_file}")
     print('File server connected')
@@ -73,7 +73,7 @@ def main():
     port_chat = 5555
     port_file = 5556
 
-    receiver_ip = '192.168.0.196'
+    receiver_ip = '192.168.68.241'
 
     chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # chat_socket.bind((host, port_chat))

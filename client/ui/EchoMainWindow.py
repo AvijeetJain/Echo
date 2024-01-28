@@ -1,4 +1,11 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+import sys
+
+sys.path.append('./')
+
+from utils.helpers import (
+    get_self_ip
+)
 
 SERVER_IP = ""
 SERVER_ADDR = ()
