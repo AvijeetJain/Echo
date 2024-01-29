@@ -355,6 +355,8 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        
+        self.main()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -504,7 +506,7 @@ class Ui_MainWindow(object):
 
     def main(self):
         global host
-        host = '192.168.68.241'
+        host = '192.168.137.1'
         port_chat = 5555
         # port_file = 5556
 

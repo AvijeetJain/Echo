@@ -37,6 +37,7 @@ ONLINE_TIMEOUT = 10  # seconds
 # Time gap between heartbeats
 HEARTBEAT_TIMER = 5  # seconds
 # Number of peers
+SERVER_CAPACITY = 10
 # Message area prefix html
 LEADING_HTML = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
 <html>
