@@ -355,6 +355,8 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        
+        self.main()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -507,12 +509,34 @@ class Ui_MainWindow(object):
         host = '192.168.68.241'
         port_chat = 5555
         # port_file = 5556
+        
+        receiver = ('192.168.137.1', port_chat)
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        chat_socket.bind((host, port_chat))
-        chat_socket.listen()
-
-        print(f"Chat server listening on {host}:{port_chat}")
+        
+        client = 1
+        server = 0
+        
+        if (client):
+            chat_socket.connect(receiver)
+            print("Connected to chat server")
+            
+            self.textEdit.clear()
+        
+            self.pushButton_3.clicked.connect(lambda: self.send_chat(chat_socket))
+            self.pushButton_6.clicked.connect(lambda: self.thread(chat_socket))
+        else:
+            chat_socket.bind((host, port_chat))
+            chat_socket.listen()
+        
+            print(f"Chat server listening on {host}:{port_chat}")
+            chat_client, chat_addr = chat_socket.accept()
+            print("Connected to chat server")
+            
+            self.textEdit.clear()
+        
+            self.pushButton_3.clicked.connect(lambda: self.send_chat(chat_client))
+            self.pushButton_6.clicked.connect(lambda: self.thread(chat_client))
 
         # file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # file_socket.bind((host, port_file))
@@ -520,10 +544,10 @@ class Ui_MainWindow(object):
 
         # print(f"File server listening on {host}:{port_file}")
 
-        chat_client, chat_addr = chat_socket.accept()
+        # chat_client, chat_addr = chat_socket.accept()
         # file_client, file_addr = file_socket.accept()
 
-        print(f"Chat connection established with {chat_addr}")
+        # print(f"Chat connection established with {chat_addr}")
         # print(f"File connection established with {file_addr}")
 
         # chat_receive_thread = threading.Thread(target=self.receive_chat, args=(chat_client,))
@@ -542,10 +566,10 @@ class Ui_MainWindow(object):
         # file_receive_thread.join()
         # file_send_thread.join()
 
-        self.textEdit.clear()
+        # self.textEdit.clear()
         
-        self.pushButton_3.clicked.connect(lambda: self.send_chat(chat_client))
-        self.pushButton_6.clicked.connect(lambda: self.thread(chat_client))
+        # self.pushButton_3.clicked.connect(lambda: self.send_chat(chat_socket))
+        # self.pushButton_6.clicked.connect(lambda: self.thread(chat_socket))
         # self.pushButton_6.clicked.connect(self.send_file('./public/Resume.pdf'))
 
         # while True:
