@@ -1,8 +1,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import threading
 import os
+import json
 import sys
 import socket
+from PyQt5.QtWidgets import QTreeWidgetItem, QTreeWidget
 
 sys.path.append('./')
 
@@ -422,23 +424,28 @@ class Ui_MainWindow(object):
         file_list = []
 
         for root, dirs, files in os.walk(folder_path):
-            # Add files to list
             for file in files:
                 file_path = os.path.join(root, file)
                 file_list.append(str(file_path))
             
-            # Check if folder is empty
             for folder in dirs:
                 folder_path = os.path.join(root, folder)
-                # if not os.listdir(folder_path):
                 file_list.append(str(folder_path))
+        return file_list
 
-        Files = ''
-        for file_path in file_list:
-            Files += file_path + '\n'
+    def to_json(self):
+        list = self.list_files_and_empty_folders('./public')
+        tree = {}
+        for path in list:                
+            node = tree                   
+            for level in path.split('\\'): 
+                if level:                 
+                    node = node.setdefault(level, dict())
+        # with open('output.json', 'w') as json_file:
+        #     json.dump(tree, json_file, indent=2)
+        return tree
         
-        return Files
-
+    
     def thread(self, chat_socket): 
         t1 = threading.Thread(target=self.receive_chat, args=(chat_socket,))
         t1.start()
@@ -502,6 +509,25 @@ class Ui_MainWindow(object):
             print("File sent")
         except Exception as e:
             print(f"Error sending file: {e}")
+            
+    def add_data_to_tree(self, tree_widget, data):
+        def add_items(parent_item, items):
+            for key, value in items.items():
+                if isinstance(value, dict):
+                    child_item = QTreeWidgetItem()
+                    child_item.setText(0, key)
+                    parent_item.addChild(child_item)
+                    add_items(child_item, value)
+                else:
+                    child_item = QTreeWidgetItem(parent_item)
+                    child_item.setText(0, value)
+
+        tree_widget.clear()
+
+        for key, value in data.items():
+            top_level_item = QTreeWidgetItem(tree_widget)
+            top_level_item.setText(0, key)
+            add_items(top_level_item, value)
         
 
     def main(self):
@@ -515,6 +541,8 @@ class Ui_MainWindow(object):
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
         client = 1
+        
+        self.add_data_to_tree(self.filesTree, self.to_json())
         
         if (client):
             chat_socket.connect(receiver)
