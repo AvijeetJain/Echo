@@ -512,7 +512,7 @@ class Ui_MainWindow(object):
 
     def main(self):
         global host
-        host = '192.168.69.241'
+        host = '192.168.68.241'
         port_chat = 5555
         # port_file = 5556
 
@@ -562,18 +562,6 @@ class Ui_MainWindow(object):
         # Close sockets
         # chat_socket.close()
         # file_socket.close()
-
-
-# import userstatus_rc
-# App = QApplication(sys.argv) 
-  
-# # create the instance of our Window 
-# window = Ui_MainWindow() 
-# window.show()
-  
-# # start the app 
-# sys.exit(App.exec()) 
-
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

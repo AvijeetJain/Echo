@@ -113,7 +113,7 @@ def request_file(client_socket, file_path):
         print(f"Error requesting file: {e}")
         
 def main():
-    host = '192.168.0.196'
+    host = '192.168.68.241'
     port_chat = 5555
     port_file = 5556
 
@@ -142,7 +142,7 @@ def main():
 
 def main():
     global host
-    host = '192.168.0.196'
+    host = '192.168.68.241'
     port_chat = 5555
     # port_file = 5556
 

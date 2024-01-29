@@ -11,12 +11,10 @@ class HeaderCode(Enum):
     NEW_CONNECTION = "n"
     REQUEST_IP = "r"
     
-    
 # Compression mode to be used
 class CompressionMethod(Enum):
     NONE = 0
     ZSTD = 1
-    Utf8 = 2
 
 
 # Receiving status of a file
@@ -84,6 +82,18 @@ class DirData(BaseModel):
 class ItemSearchResult(BaseModel):
     owner: str
     data: DirData
+
+
+# Hash updation data
+class UpdateHashParams(BaseModel):
+    filepath: str
+    hash: str
+
+
+# TinyDB document schema
+class DBData(BaseModel):
+    uname: str
+    share: list[DirData]
     
 
 # User settings dictionary/json format
