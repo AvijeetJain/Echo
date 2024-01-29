@@ -21,7 +21,7 @@ def send_file(s, server):
         s.send(file_size.encode())
         #delay 1 sec
         time.sleep(1)
-
+        
         with open(file_path, 'rb') as file:
             while True:
                 data = file.read(10240)

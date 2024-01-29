@@ -21,6 +21,3 @@ def get_self_ip() -> str:
     finally:
         s.close()
     return ip
-
-# a = get_self_ip()
-# print(a)
