@@ -10,6 +10,8 @@ FMT = "utf-8"
 CLIENT_SEND_PORT = 5678
 # Port [client-side] for communication to the client
 CLIENT_RECV_PORT = 4321
+# App Directory
+APP_DIR = Path.home() / Path(".Echo")
 # Default path for downloads
 RECV_FOLDER_PATH = Path.home() / Path("Downloads")
 # Path for storing compression data
