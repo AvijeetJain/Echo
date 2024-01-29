@@ -1,5 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+import threading
+import os
 import sys
+import socket
 
 sys.path.append('./')
 
@@ -355,7 +358,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Drizzle"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Echo"))
         self.label_3.setText(_translate("MainWindow", "Echo / john_doe_"))
         self.btnGlobalSearch.setText(_translate("MainWindow", "Gobal Search"))
         self.btnAddFiles.setText(_translate("MainWindow", "Add Files"))
@@ -412,7 +415,145 @@ class Ui_MainWindow(object):
         self.label_9.setText(_translate("MainWindow", "TextLabel"))
         self.label_6.setText(_translate("MainWindow", "TextLabel"))
         self.label_11.setText(_translate("MainWindow", "TextLabel"))
+    
+    def list_files_and_empty_folders(self, folder_path):
+        file_list = []
 
+        for root, dirs, files in os.walk(folder_path):
+            # Add files to list
+            for file in files:
+                file_path = os.path.join(root, file)
+                file_list.append(str(file_path))
+            
+            # Check if folder is empty
+            for folder in dirs:
+                folder_path = os.path.join(root, folder)
+                # if not os.listdir(folder_path):
+                file_list.append(str(folder_path))
+
+        Files = ''
+        for file_path in file_list:
+            Files += file_path + '\n'
+        
+        return Files
+
+    def thread(self, chat_socket): 
+        t1 = threading.Thread(target=self.receive_chat, args=(chat_socket,))
+        t1.start()
+
+    def receive_chat(self,client_socket):
+        try:
+            while True:
+                message = client_socket.recv(1024).decode('utf-8')
+                if not message:
+                    break
+                self.textEdit.append("Sender: " + message)
+        except Exception as e:
+            print(f"Error receiving chat message: {e}")
+            
+    def send_chat(self, client_socket):
+        try:
+            message = self.plainTextEdit.toPlainText()
+            client_socket.send(message.encode('utf-8'))
+            self.textEdit.append("You: " + message)
+            self.plainTextEdit.clear()
+        except Exception as e:
+            print(f"Error sending chat message: {e}")
+
+    def receive_file(self, client_socket, download_path):
+        try:
+            file_name = client_socket.recv(1024).decode('utf-8')
+            file_path = os.path.join(download_path, file_name)
+            with open(file_path, 'wb') as file:
+                while True:
+                    data = client_socket.recv(1024)
+                    if not data:
+                        break
+                    file.write(data)
+            print(f"File received and saved at: {file_path}")
+        except Exception as e:
+            print(f"Error receiving file: {e}")
+        
+
+    def send_file(self, file_path):
+        global host
+        port_file = 5556
+
+        file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        file_socket.bind((host, port_file))
+        file_socket.listen()
+
+        print(f"File server listening on {host}:{port_file}")
+
+        file_client, file_addr = file_socket.accept()
+        print(f"File connection established with {file_addr}")
+        try:
+            file_name = os.path.basename(file_path)
+            file_client.send(file_name.encode('utf-8'))
+            print("Sending file...")
+            with open(file_path, 'rb') as file:
+                while True:
+                    data = file.read(1024)
+                    if not data:
+                        break
+                    file_client.send(data)
+            print("File sent")
+        except Exception as e:
+            print(f"Error sending file: {e}")
+        
+
+    def main(self):
+        global host
+        host = '192.168.68.241'
+        port_chat = 5555
+        # port_file = 5556
+
+        chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        chat_socket.bind((host, port_chat))
+        chat_socket.listen()
+
+        print(f"Chat server listening on {host}:{port_chat}")
+
+        # file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # file_socket.bind((host, port_file))
+        # file_socket.listen()
+
+        # print(f"File server listening on {host}:{port_file}")
+
+        chat_client, chat_addr = chat_socket.accept()
+        # file_client, file_addr = file_socket.accept()
+
+        print(f"Chat connection established with {chat_addr}")
+        # print(f"File connection established with {file_addr}")
+
+        # chat_receive_thread = threading.Thread(target=self.receive_chat, args=(chat_client,))
+        # chat_send_thread = threading.Thread(target=self.send_chat, args=(chat_client,))
+        # file_receive_thread = threading.Thread(target=receive_file, args=(file_client, 'downloads'))
+        # file_send_thread = threading.Thread(target=send_file, args=(file_client, './public/hello.txt'))
+
+        # chat_receive_thread.start()
+        # chat_send_thread.start()
+        # file_receive_thread.start()
+        # file_send_thread.start()
+
+        # Wait for threads to finish
+        # chat_receive_thread.join()
+        # chat_send_thread.join()
+        # file_receive_thread.join()
+        # file_send_thread.join()
+
+        self.textEdit.clear()
+        
+        self.pushButton_3.clicked.connect(lambda: self.send_chat(chat_client))
+        self.pushButton_6.clicked.connect(lambda: self.thread(chat_client))
+        # self.pushButton_6.clicked.connect(self.send_file('./public/Resume.pdf'))
+
+        # while True:
+        #     self.receive_chat(chat_socket)
+
+        # Close sockets
+        # chat_socket.close()
+        # file_socket.close()
 
 if __name__ == "__main__":
     import sys

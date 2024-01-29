@@ -515,7 +515,7 @@ class Ui_MainWindow(object):
         port_chat = 5555
         port_file = 5556
 
-        receiver_ip = '192.168.68.241'
+        receiver_ip = '192.168.137.1'
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # chat_socket.bind((host, port_chat))
