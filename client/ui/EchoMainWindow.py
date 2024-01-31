@@ -462,7 +462,7 @@ class Ui_MainWindow(object):
                     message = response[1]
                     self.textEdit.append("Sender: " + message)
                 
-                elif response[0] == str(HeaderCode.FILE):
+                elif response[0] == str(HeaderCode.FILE_SHARE):
                     global host
                     port_file_to_connect = int(response[1])
 
@@ -488,7 +488,7 @@ class Ui_MainWindow(object):
                 self.textEdit.append("You: " + self.plainTextEdit.toPlainText())
                 self.plainTextEdit.clear()
 
-            elif(request == HeaderCode.FILE):
+            elif(request == HeaderCode.FILE_SHARE):
                 message = str(request) + '@' + str(message)
                 client_socket.send(message.encode('utf-8'))
 
@@ -523,7 +523,7 @@ class Ui_MainWindow(object):
         for file_path in file_paths[0]:
             file_name = os.path.basename(file_path)
             global request_socket
-            self.send_request(request_socket, HeaderCode.FILE, port_file)
+            self.send_request(request_socket, HeaderCode.FILE_SHARE, port_file)
             
         
 
