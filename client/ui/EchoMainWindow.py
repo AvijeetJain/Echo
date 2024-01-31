@@ -540,7 +540,7 @@ class Ui_MainWindow(object):
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        client = 0
+        client = 1
         
         self.add_data_to_tree(self.filesTree, self.to_json())
         
