@@ -465,18 +465,23 @@ class Ui_MainWindow(object):
                     self.textEdit.append("Sender: " + message)
                 
                 elif response[0] == str(HeaderCode.FILE_SHARE):
-                    global host
-                    port_file_to_connect = int(response[1])
+                    file_server_ip = response[1]
+                    port_file_to_connect = int(response[2])
 
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-                    sock.connect((host, port_file_to_connect)) 
+                    sock.connect((file_server_ip, port_file_to_connect)) 
 
                     download_path = './download'
 
                     if not os.path.exists(download_path):
                         os.makedirs(download_path)
                     
-                    self.receive_file(sock, download_path)
+                    try:
+                        self.receive_file(sock, download_path)
+                    except Exception as e:
+                        print(f"Error receiving file: {e}")
+                    finally:
+                        sock.close()
 
 
             except Exception as e:
@@ -491,7 +496,7 @@ class Ui_MainWindow(object):
                 self.plainTextEdit.clear()
 
             elif(request == HeaderCode.FILE_SHARE):
-                message = str(request) + '@' + str(message)
+                message = str(request) + '@' + str(host) + "@" + str(message)
                 client_socket.send(message.encode('utf-8'))
 
                 
@@ -527,8 +532,7 @@ class Ui_MainWindow(object):
             global request_socket
             self.send_request(request_socket, HeaderCode.FILE_SHARE, port_file)
             self.send_file(file_path, port_file)    
-            
-        
+
 
     def send_file(self, file_path, port_file):
         global host
@@ -554,6 +558,9 @@ class Ui_MainWindow(object):
             print("File sent")
         except Exception as e:
             print(f"Error sending file: {e}")
+        
+        finally:
+            file_socket.close()
             
     def add_data_to_tree(self, tree_widget, data):
         def add_items(parent_item, items):
@@ -589,11 +596,11 @@ class Ui_MainWindow(object):
         port_chat = 5555
         port_file = 5556
         
-        receiver = ('192.168.137.1', port_chat)
+        receiver = ('192.168.137.231', port_chat)
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        client = 0
+        client = 1
         
         if (client):
             chat_socket.connect(receiver)
