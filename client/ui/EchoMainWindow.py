@@ -360,7 +360,6 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         
-        self.main()
         self.init_views()
         self.on_click_listeners()
 
@@ -449,7 +448,6 @@ class Ui_MainWindow(object):
         #     json.dump(tree, json_file, indent=2)
         return tree
         
-    
     def thread(self, chat_socket): 
         t1 = threading.Thread(target=self.receive_chat, args=(chat_socket,))
         t1.start()
@@ -457,28 +455,46 @@ class Ui_MainWindow(object):
     def receive_chat(self,client_socket):
         while True:
             try:
-                message = client_socket.recv(1024).decode('utf-8')
-                if not message:
-                    break
-                self.textEdit.append("Sender: " + message)
+                response = client_socket.recv(1024).decode('utf-8')
+                response = response.split('@')
+
+                if response[0] == str(HeaderCode.MESSAGE):
+                    message = response[1]
+                    self.textEdit.append("Sender: " + message)
+                
+                elif response[0] == str(HeaderCode.FILE):
+                    global host
+                    port_file_to_connect = int(response[1])
+
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+                    sock.connect((host, port_file_to_connect)) 
+
+                    download_path = './download'
+
+                    if not os.path.exists(download_path):
+                        os.makedirs(download_path)
+                    
+                    self.receive_file(sock, download_path)
+
+
             except Exception as e:
                 print(f"Error receiving chat message: {e}")
             
-    def send_request(self, client_socket, request):
+    def send_request(self, client_socket, request, message=None):
         try:
             if(request == HeaderCode.MESSAGE):
-                message = str(request) + self.plainTextEdit.toPlainText()
+                message = str(request) + '@' + self.plainTextEdit.toPlainText()
                 client_socket.send(message.encode('utf-8'))
-                self.textEdit.append("You: " + message)
+                self.textEdit.append("You: " + self.plainTextEdit.toPlainText())
                 self.plainTextEdit.clear()
 
-            elif(request == 'file'):
-                message = str(request) + self.plainTextEdit.toPlainText()
+            elif(request == HeaderCode.FILE):
+                message = str(request) + '@' + str(message)
                 client_socket.send(message.encode('utf-8'))
 
                 
         except Exception as e:
-            print(f"Error sending chat message: {e}")
+            print(f"Error sending request: {e}")
 
     def receive_file(self, client_socket, download_path):
         try:
@@ -496,22 +512,23 @@ class Ui_MainWindow(object):
 
     def on_send_file_clicked(self):
         #Open Qfile dialog to select file/files
-        file_path = QFileDialog.getOpenFileNames(
+        global port_file
+        file_paths = QFileDialog.getOpenFileNames(
             None, 
             "Select Files",
             str(Path.home()))
 
-        print('file_path :',file_path)
+        print('file_path :',file_paths)
 
-        i = 1
-        for files in file_path[0]:
-            print('file',i ,': ',files[i])
-            i += 1
+        for file_path in file_paths[0]:
+            file_name = os.path.basename(file_path)
+            global request_socket
+            self.send_request(request_socket, HeaderCode.FILE, port_file)
+            
         
 
-    def send_file(self, file_path):
+    def send_file(self, file_path, port_file):
         global host
-        global port_file
 
         file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         file_socket.bind((host, port_file))
@@ -563,34 +580,37 @@ class Ui_MainWindow(object):
 
     def main(self):
         global host
+        global request_socket
         host = '192.168.137.1'
-        # port_chat = 5555
-        # port_file = 5556
+        port_chat = 5555
+        port_file = 5556
         
-        # receiver = ('192.168.137.1', port_chat)
+        receiver = ('192.168.137.1', port_chat)
 
-        # chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
         client = 0
         
-        # if (client):
-        #     chat_socket.connect(receiver)
-        #     print("Connected to chat server")
+        if (client):
+            chat_socket.connect(receiver)
+            print("Connected to chat server")
+
+            request_socket = chat_socket
+
+        else:
+            chat_socket.bind((host, port_chat))
+            chat_socket.listen()
         
-        #     self.pushButton_3.clicked.connect(lambda: self.send_request(chat_socket, 'message'))
-        #     self.pushButton_6.clicked.connect(lambda: self.thread(chat_socket))
-        # else:
-        #     chat_socket.bind((host, port_chat))
-        #     chat_socket.listen()
+            print(f"Chat server listening on {host}:{port_chat}")
+            request_socket, chat_addr = chat_socket.accept()
+            print("Connected to chat server")
         
-        #     print(f"Chat server listening on {host}:{port_chat}")
-        #     chat_client, chat_addr = chat_socket.accept()
-        #     print("Connected to chat server")
-        
-        #     self.pushButton_3.clicked.connect(lambda: self.send_request(chat_client, 'message'))
-        #     self.pushButton_6.clicked.connect(lambda: self.thread(chat_client))
+        self.pushButton_3.clicked.connect(lambda: self.send_request(request_socket, 'message'))
+        self.pushButton.clicked.connect(lambda: self.thread(request_socket))
     
     def init_views(self):
+        self.main()
+
         # Clear chat field
         self.textEdit.clear()
 

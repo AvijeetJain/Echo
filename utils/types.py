@@ -6,6 +6,7 @@ class HeaderCode(Enum):
     DIRECT_TRANSFER_REQUEST = "t"
     DIRECT_TRANSFER = "T"
     FILE_REQUEST = "F"
+    FILE_SHARE = "S"
     REQUEST_UNAME = "R"
     MESSAGE = "m"
     NEW_CONNECTION = "n"
