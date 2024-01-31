@@ -458,6 +458,8 @@ class Ui_MainWindow(object):
                 response = client_socket.recv(1024).decode('utf-8')
                 response = response.split('@')
 
+                print(response)
+
                 if response[0] == str(HeaderCode.MESSAGE):
                     message = response[1]
                     self.textEdit.append("Sender: " + message)
@@ -524,6 +526,7 @@ class Ui_MainWindow(object):
             file_name = os.path.basename(file_path)
             global request_socket
             self.send_request(request_socket, HeaderCode.FILE_SHARE, port_file)
+            self.send_file(file_path, port_file)    
             
         
 
@@ -590,7 +593,7 @@ class Ui_MainWindow(object):
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        client = 1
+        client = 0
         
         if (client):
             chat_socket.connect(receiver)
