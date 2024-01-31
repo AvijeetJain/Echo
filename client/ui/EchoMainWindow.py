@@ -605,8 +605,8 @@ class Ui_MainWindow(object):
             request_socket, chat_addr = chat_socket.accept()
             print("Connected to chat server")
         
-        self.pushButton_3.clicked.connect(lambda: self.send_request(request_socket, 'message'))
-        self.pushButton.clicked.connect(lambda: self.thread(request_socket))
+        self.pushButton_3.clicked.connect(lambda: self.send_request(request_socket, HeaderCode.MESSAGE))
+        self.btnSettings.clicked.connect(lambda: self.thread(request_socket))
     
     def init_views(self):
         self.main()
