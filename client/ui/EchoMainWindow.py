@@ -581,6 +581,7 @@ class Ui_MainWindow(object):
     def main(self):
         global host
         global request_socket
+        global port_file
         host = '192.168.137.1'
         port_chat = 5555
         port_file = 5556
