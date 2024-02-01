@@ -2,6 +2,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import threading
 import os
 import json
+import time
+import hashlib
 import sys
 import socket
 from pathlib import Path
@@ -17,6 +19,15 @@ from utils.types import HeaderCode
 SERVER_IP = ""
 SERVER_ADDR = ()
 CLIENT_IP = get_self_ip()
+
+# class HeartbeatWorker():
+#     global SERVER_SOCKET
+    
+#     def run(self):
+#         while True:
+            
+#             print("Heartbeat")
+#             time.sleep(5)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -459,30 +470,39 @@ class Ui_MainWindow(object):
                 response = response.split('@')
 
                 print(response)
-
-                if response[0] == str(HeaderCode.MESSAGE):
-                    message = response[1]
-                    self.textEdit.append("Sender: " + message)
                 
-                elif response[0] == str(HeaderCode.FILE_SHARE):
-                    file_server_ip = response[1]
-                    port_file_to_connect = int(response[2])
-
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-                    sock.connect((file_server_ip, port_file_to_connect)) 
-
-                    download_path = './download'
-
-                    if not os.path.exists(download_path):
-                        os.makedirs(download_path)
+                main_message = response[0] + response[1]
+                hashed_data = self.hash_data(main_message)
+                
+                if (hashed_data != response[2]):
+                    print("Message has been tampered")
+                    self.textEdit.append("Message has been tampered")
+                    continue
+                else :
+                    print("Message is authentic")
+                    self.textEdit.append("Message is authentic")
+                    if response[0] == str(HeaderCode.MESSAGE):
+                        message = response[1]
+                        self.textEdit.append("Sender: " + message)
                     
-                    try:
-                        self.receive_file(sock, download_path)
-                    except Exception as e:
-                        print(f"Error receiving file: {e}")
-                    finally:
-                        sock.close()
+                    elif response[0] == str(HeaderCode.FILE_SHARE):
+                        file_server_ip = response[1]
+                        port_file_to_connect = int(response[2])
 
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+                        sock.connect((file_server_ip, port_file_to_connect)) 
+
+                        download_path = './download'
+
+                        if not os.path.exists(download_path):
+                            os.makedirs(download_path)
+                        
+                        try:
+                            self.receive_file(sock, download_path)
+                        except Exception as e:
+                            print(f"Error receiving file: {e}")
+                        finally:
+                            sock.close()
 
             except Exception as e:
                 print(f"Error receiving chat message: {e}")
@@ -491,6 +511,8 @@ class Ui_MainWindow(object):
         try:
             if(request == HeaderCode.MESSAGE):
                 message = str(request) + '@' + self.plainTextEdit.toPlainText()
+                data = self.hash_data(message)
+                message = message + "@" + data
                 client_socket.send(message.encode('utf-8'))
                 self.textEdit.append("You: " + self.plainTextEdit.toPlainText())
                 self.plainTextEdit.clear()
@@ -532,7 +554,6 @@ class Ui_MainWindow(object):
             global request_socket
             self.send_request(request_socket, HeaderCode.FILE_SHARE, port_file)
             self.send_file(file_path, port_file)    
-
 
     def send_file(self, file_path, port_file):
         file_host = '192.168.137.231'
@@ -588,6 +609,10 @@ class Ui_MainWindow(object):
     def on_list_widget_item_clicked(self, item):
         print(item.text())
       
+    def hash_data(data):
+        hashed_data = hashlib.sha256(data.encode()).hexdigest()
+        return data + "@" + hashed_data 
+
 
     def main(self):
         global host
