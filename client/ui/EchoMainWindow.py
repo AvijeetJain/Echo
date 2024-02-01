@@ -592,7 +592,7 @@ class Ui_MainWindow(object):
         global host
         global request_socket
         global port_file
-        host = '192.168.137.1'
+        host = CLIENT_IP
         port_chat = 5555
         port_file = 5556
         
@@ -600,7 +600,7 @@ class Ui_MainWindow(object):
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        client = 1
+        client = 0
         
         if (client):
             chat_socket.connect(receiver)
