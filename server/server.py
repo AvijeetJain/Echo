@@ -1,3 +1,4 @@
+import logging
 import socket
 import select
 import threading
@@ -8,10 +9,10 @@ import sys
 
 #Import Utilities
 from utils.exceptions import ExceptionCode, RequestException
-from utils.constants import APP_DIR, SERVER_CAPACITY, SERVER_RECV_PORT
+from utils.constants import APP_DIR, FMT, HEADER_MSG_LEN, HEADER_TYPE_LEN, SERVER_CAPACITY, SERVER_RECV_PORT
 from utils.helpers import get_self_ip
 from utils.socket_functions import recvall
-from utils.types import SocketMessage
+from utils.types import HeaderCode, SocketMessage
 
 app_dir = APP_DIR
 logs_dir = app_dir / "logs"
@@ -123,6 +124,7 @@ def Main():
     global uname_to_ip
     global ip_to_uname
     global sockets_list
+    global uname_to_status
     
     # Get IP of the server
     server_ip = get_self_ip()
