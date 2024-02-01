@@ -597,7 +597,7 @@ class Ui_MainWindow(object):
         port_chat = 5555
         port_file = 5556
         
-        receiver = ('192.168.137.231', port_chat)
+        receiver = ('192.168.137.1', port_chat)
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
