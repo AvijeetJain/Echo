@@ -601,7 +601,7 @@ class Ui_MainWindow(object):
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        client = 1
+        client = 0
         
         if (client):
             chat_socket.connect(receiver)
