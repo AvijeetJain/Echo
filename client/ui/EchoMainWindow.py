@@ -535,10 +535,10 @@ class Ui_MainWindow(object):
 
 
     def send_file(self, file_path, port_file):
-        global host
+        file_host = '192.168.137.231'
 
         file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        file_socket.bind((host, port_file))
+        file_socket.bind((file_host, port_file))
         file_socket.listen()
 
         print(f"File server listening on {host}:{port_file}")
@@ -556,6 +556,7 @@ class Ui_MainWindow(object):
                         break
                     file_client.send(data)
             print("File sent")
+            
         except Exception as e:
             print(f"Error sending file: {e}")
         
@@ -596,7 +597,7 @@ class Ui_MainWindow(object):
         port_chat = 5555
         port_file = 5556
         
-        receiver = ('192.168.137.231', port_chat)
+        receiver = ('192.168.137.1', port_chat)
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
