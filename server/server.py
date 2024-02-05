@@ -1,18 +1,22 @@
 import logging
-import socket
 import select
-import threading
-import time
-import math
-import os
+import socket
 import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from pprint import pformat
+import msgpack
+from tinydb import Query, TinyDB
+
 
 #Import Utilities
+sys.path.append("./")
+from utils.constants import FMT, HEADER_MSG_LEN, HEADER_TYPE_LEN, SERVER_RECV_PORT, APP_DIR, SERVER_CAPACITY
 from utils.exceptions import ExceptionCode, RequestException
-from utils.constants import APP_DIR, FMT, HEADER_MSG_LEN, HEADER_TYPE_LEN, SERVER_CAPACITY, SERVER_RECV_PORT
-from utils.helpers import get_self_ip
-from utils.socket_functions import recvall
-from utils.types import HeaderCode, SocketMessage
+from utils.helpers import item_search, update_file_hash
+from utils.socket_functions import get_self_ip, recvall
+from utils.types import DBData, DirData, HeaderCode, ItemSearchResult, SocketMessage, UpdateHashParams
 
 app_dir = APP_DIR
 logs_dir = app_dir / "logs"
@@ -21,6 +25,36 @@ database_dir = app_dir / "db"
 app_dir.mkdir(exist_ok=True)
 (logs_dir).mkdir(exist_ok=True)
 (database_dir).mkdir(exist_ok=True)
+
+# Debugging purpose
+import os
+print(os.getcwd())
+
+# Get IP of the server
+server_ip = get_self_ip()
+print('Server is hosted at: ',server_ip)
+
+
+echo_db = TinyDB(database_dir / "db.json")
+
+# Socket to listen for incoming connections from peers
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# Configuring the socket to reuse addresses and immediately transmit data
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+server_socket.bind((server_ip, SERVER_RECV_PORT))
+server_socket.listen(SERVER_CAPACITY)
+
+# List of connected peers
+sockets_list = [server_socket]
+# To lookup IP of a given username
+uname_to_ip: dict[str, str] = {}
+# To lookup username of a given IP
+ip_to_uname: dict[str, str] = {}
+# Mapping from username to last seen timestamp
+uname_to_status: dict[str, float] = {}
 
 def log(message: str, log_type: str = "INFO"):
     """Utility to log messages to a file.
@@ -116,48 +150,296 @@ def read_handler(notified_socket: socket.socket):
         sockets_list.append(client_socket)
         print(f"Accepted new connection from {client_addr[0]}:{client_addr[1]}")
 
-    return 
+    else:
+        try:
+            # Receive the message
+            request = receive_request(notified_socket)
+            client_addr = notified_socket.getpeername()
+
+            # Check if the request is from an unregistered user
+            if ip_to_uname.get(notified_socket.getpeername()[0]) is None:
+                if request["type"] != HeaderCode.NEW_CONNECTION:
+                    raise RequestException(
+                        msg=f"User at {client_addr} not registered",
+                        code=ExceptionCode.UNAUTHORIZED,
+                    )
+
+                # First request from an unregistered user should be a registration request
+                uname = request["query"].decode(FMT)
+                addr = uname_to_ip.get(uname)
+                logging.debug(msg=f"Registration request for username {uname} from address {client_addr}")
+
+                # Store the IP of the user in the mapping
+                if addr is None:
+                    uname_to_ip[uname] = client_addr[0]
+                    ip_to_uname[client_addr[0]] = uname
+                    logging.debug(
+                        msg=(
+                            "Accepted new connection from"
+                            f" {client_addr[0]}:{client_addr[1]}"
+                            f" username: {request['query'].decode(FMT)}"
+                        )
+                    )
+                    # Acknowledge successful registration
+                    notified_socket.send(f"{HeaderCode.NEW_CONNECTION.value}".encode(FMT))
+                else:
+                    if addr != client_addr[0]:
+                        raise RequestException(
+                            msg=f"User with username {addr} already exists",
+                            code=ExceptionCode.USER_EXISTS,
+                        )
+                    else:
+                        raise RequestException(
+                            msg="Cannot re-register user for same address",
+                            code=ExceptionCode.BAD_REQUEST,
+                        )
+                return
+
+            # Requests from registered users
+            match request["type"]:
+                # Request the IP of a given username
+                case HeaderCode.REQUEST_IP:
+                    # Lookup the IP in the mapping
+                    response_data = uname_to_ip.get(request["query"].decode(FMT))
+                    if response_data is not None:
+                        # If the user has not requested a lookup for their own IP
+                        if response_data != notified_socket.getpeername()[0]:
+                            logging.debug(msg=f"Valid request: {response_data}")
+                            # Send the IP back to the user
+                            ip_data = response_data.encode(FMT)
+                            header = f"{HeaderCode.REQUEST_IP.value}{len(ip_data):<{HEADER_MSG_LEN}}".encode(FMT)
+                            notified_socket.send(header + ip_data)
+                        else:
+                            raise RequestException(
+                                msg="Cannot query for your own address",
+                                code=ExceptionCode.BAD_REQUEST,
+                            )
+                    else:
+                        raise RequestException(
+                            msg=f"Username {request['query'].decode(FMT)} not found",
+                            code=ExceptionCode.NOT_FOUND,
+                        )
+                # Request the username of a given IP
+                case HeaderCode.REQUEST_UNAME:
+                    lookup_addr = request["query"].decode(FMT)
+                    # If the user has not requested a lookup for their own username
+                    if lookup_addr != notified_socket.getpeername()[0]:
+                        # Lookup the username in the mapping
+                        username = ip_to_uname.get(lookup_addr)
+                        if username is not None:
+                            # Send the username back to the user
+                            username_bytes = username.encode(FMT)
+                            header = f"{HeaderCode.REQUEST_UNAME.value}{len(username):<{HEADER_MSG_LEN}}".encode(FMT)
+                            notified_socket.send(header + username_bytes)
+                        else:
+                            raise RequestException(
+                                msg=f"Username for {lookup_addr} not found",
+                                code=ExceptionCode.NOT_FOUND,
+                            )
+                    else:
+                        raise RequestException(
+                            msg="Cannot query for your own username",
+                            code=ExceptionCode.BAD_REQUEST,
+                        )
+                # Registration request for a new user
+                case HeaderCode.NEW_CONNECTION:
+                    uname = request["query"].decode(FMT)
+                    # Check if the user is already registered
+                    addr = uname_to_ip.get(uname)
+                    client_addr = notified_socket.getpeername()
+                    logging.debug(f"Registration request for username {uname} from address {client_addr}")
+                    if addr is None:
+                        # Store the user's IP in the mapping
+                        uname_to_ip[uname] = client_addr[0]
+                        logging.debug(
+                            msg=(
+                                "Accepted new connection from"
+                                f" {client_addr[0]}:{client_addr[1]}"
+                                f" username: {uname}"
+                            )
+                        )
+                        # Acknowledge successful registration
+                        notified_socket.send(f"{HeaderCode.NEW_CONNECTION.value}".encode(FMT))
+                    else:
+                        if addr != client_addr[0]:
+                            raise RequestException(
+                                msg=f"User with username {addr} already exists",
+                                code=ExceptionCode.USER_EXISTS,
+                            )
+                        else:
+                            raise RequestException(
+                                msg="Cannot re-register user for same address",
+                                code=ExceptionCode.BAD_REQUEST,
+                            )
+                # Sending share data of a user
+                case HeaderCode.SHARE_DATA:
+                    share_data: list[DirData] = msgpack.unpackb(request["query"])
+                    # Check if the user is registered
+                    username = ip_to_uname.get(notified_socket.getpeername()[0])
+                    User = Query()
+                    logging.debug(f"Received update to share data for user {username}")
+                    if username is not None:
+                        # Update the share data under the username key in the database if it exists
+                        # or insert it if it does not exists
+                        echo_db.upsert(
+                            {"uname": username, "share": share_data},
+                            User.uname == username,
+                        )
+                        # Acknowledge successfully adding share data
+                        notified_socket.send(HeaderCode.SHARE_DATA.value.encode(FMT))
+                    else:
+                        raise RequestException(
+                            msg=f"Username does not exist",
+                            code=ExceptionCode.NOT_FOUND,
+                        )
+                # Updating hash of a file item
+                case HeaderCode.UPDATE_HASH:
+                    update_hash_params: UpdateHashParams = msgpack.unpackb(request["query"])
+                    # Check if the user is registered
+                    username = ip_to_uname.get(notified_socket.getpeername()[0])
+                    if username is not None:
+                        User = Query()
+                        try:
+                            # Search for the user's files
+                            user_share = echo_db.search(User.uname == username)[0]["share"]
+                            # Update the file item with the given hash
+                            update_file_hash(
+                                user_share,
+                                update_hash_params["filepath"],
+                                update_hash_params["hash"],
+                            )
+                            echo_db.update({"share": user_share}, User.uname == username)
+                        except IndexError:
+                            raise RequestException(
+                                msg=f"Username does not exist",
+                                code=ExceptionCode.NOT_FOUND,
+                            )
+                    else:
+                        raise RequestException(
+                            msg=f"Username does not exist",
+                            code=ExceptionCode.NOT_FOUND,
+                        )
+                # Browse the share data of a user
+                case HeaderCode.FILE_BROWSE:
+                    # Check if the user is registered and if the queried username exists
+                    username = ip_to_uname.get(notified_socket.getpeername()[0])
+                    user_exists = uname_to_ip.get(request["query"].decode(FMT), False)
+                    if username is not None and user_exists:
+                        User = Query()
+                        # Search for the queried user's files
+                        browse_files: list[DBData] = echo_db.search(User.uname == request["query"].decode(FMT))
+                        # Send results back to the user
+                        search_result_bytes = msgpack.packb(browse_files)
+                        search_result_header = (
+                            f"{HeaderCode.FILE_BROWSE.value}{len(search_result_bytes):<{HEADER_MSG_LEN}}".encode(FMT)
+                        )
+                        notified_socket.sendall(search_result_header + search_result_bytes)
+                    else:
+                        raise RequestException(
+                            msg=f"User does not exist, {request['query'].decode(FMT)}",
+                            code=ExceptionCode.NOT_FOUND,
+                        )
+                # Search for a file across share data of all users
+                case HeaderCode.FILE_SEARCH:
+                    # Check if the user is registered
+                    username = ip_to_uname.get(notified_socket.getpeername()[0])
+                    search_query = request["query"].decode(FMT).strip()
+                    if username is not None and search_query:
+                        data: list[DBData] = echo_db.all()
+                        result: list[ItemSearchResult] = []
+                        # Loop through all the users
+                        for user in data:
+                            # Skip the user's own files
+                            if user["uname"] == username:
+                                continue
+                            # Search through the user's share data
+                            dir: list[DirData] = user["share"]
+                            item_search(dir, result, search_query.lower(), user["uname"])
+                        logging.debug(f"{pformat(result)}")
+
+                        # Send search results back to the user
+                        search_result_bytes = msgpack.packb(result)
+                        search_result_header = (
+                            f"{HeaderCode.FILE_SEARCH.value}{len(search_result_bytes):<{HEADER_MSG_LEN}}".encode(FMT)
+                        )
+
+                        notified_socket.sendall(search_result_header + search_result_bytes)
+                    else:
+                        raise RequestException(
+                            msg=f"User does not exist",
+                            code=ExceptionCode.NOT_FOUND,
+                        )
+                # Update to user's online status
+                case HeaderCode.HEARTBEAT_REQUEST:
+                    # Check if the user is registered
+                    username = ip_to_uname.get(notified_socket.getpeername()[0])
+                    if username is not None:
+                        # Update the user's last seen to the current time
+                        uname_to_status[username] = time.time()
+                        # Return the last seen status of all users except the current user
+                        filtered_status = {k: v for k, v in uname_to_status.items() if k != username}
+                        status_data = msgpack.packb(filtered_status)
+                        header = f"{HeaderCode.HEARTBEAT_REQUEST.value}{len(status_data):<{HEADER_MSG_LEN}}".encode(FMT)
+                        notified_socket.sendall(header + status_data)
+                    else:
+                        raise RequestException(
+                            msg=f"Username does not exist",
+                            code=ExceptionCode.NOT_FOUND,
+                        )
+                # Client sent an error
+                case HeaderCode.ERROR:
+                    raise RequestException(
+                        msg=f"{request['query']}",
+                        code=ExceptionCode.DISCONNECT,
+                    )
+                # Bad requests with invalid header
+                case _:
+                    raise RequestException(
+                        msg=f"Bad request from {notified_socket.getpeername()}",
+                        code=ExceptionCode.BAD_REQUEST,
+                    )
+        except TypeError as e:
+            logging.exception(msg=e)
+        # Broken pipe or other OS errors
+        except OSError:
+            try:
+                # Remove the socket from the list of connected sockets
+                sockets_list.remove(notified_socket)
+                # Remove the user from the lookup mappings
+                addr_to_remove = notified_socket.getpeername()[0]
+                uname = ip_to_uname.pop(addr_to_remove, None)
+                uname_to_ip.pop(uname, None)
+            except ValueError:
+                logging.info("already removed")
+            except Exception as e:
+                logging.exception(f"Error while removing socket: {e}")
+        # Returning raised errors back to the user
+        except RequestException as e:
+            if e.code == ExceptionCode.DISCONNECT:
+                try:
+                    # Remove the socket from the list of connected sockets
+                    sockets_list.remove(notified_socket)
+                    addr_to_remove = notified_socket.getpeername()[0]
+                    uname = ip_to_uname.pop(addr_to_remove, None)
+                    uname_to_ip.pop(uname, None)
+                except ValueError:
+                    logging.info("already removed")
+            else:
+                # Encode and send the error back to the user
+                exc_data = msgpack.packb(e, default=RequestException.to_dict, use_bin_type=True)
+                header = f"{HeaderCode.ERROR.value}{len(exc_data):<{HEADER_MSG_LEN}}".encode(FMT)
+                notified_socket.send(header + exc_data)
+            logging.exception(msg=f"Exception: {e.msg}")
+            return
+        except Exception as e:
+            logging.exception(e)
 
 
-def Main():
-    global server_socket
-    global uname_to_ip
-    global ip_to_uname
-    global sockets_list
-    global uname_to_status
-    
-    # Get IP of the server
-    server_ip = get_self_ip()
-    print('Server is hosted at: ',server_ip)
+while True:
+    read_sockets: list[socket.socket]
+    exception_sockets: list[socket.socket]
 
-    # Socket to listen for incoming connections from peers
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Configuring the socket to reuse addresses and immediately transmit data
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-    server_socket.bind((IP, SERVER_RECV_PORT))
-    server_socket.listen(SERVER_CAPACITY)
-
-    # List of connected peers
-    sockets_list = [server_socket]
-    # To lookup IP of a given username
-    uname_to_ip: dict[str, str] = {}
-    # To lookup username of a given IP
-    ip_to_uname: dict[str, str] = {}
-    # Mapping from username to last seen timestamp
-    uname_to_status: dict[str, float] = {}
-
-    while True:
-        read_sockets: list[socket.socket]
-        exception_sockets: list[socket.socket]
-
-        # Use the select() system call to get a list of sockets which are ready to read
-        read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 0.1)
-        for notified_socket in read_sockets:
-            read_handler(notified_socket)
-
-
-if __name__ == '__main__':
-    Main()
+    # Use the select() system call to get a list of sockets which are ready to read
+    read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 0.1)
+    for notified_socket in read_sockets:
+        read_handler(notified_socket)

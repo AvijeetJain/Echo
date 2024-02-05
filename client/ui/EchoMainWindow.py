@@ -471,7 +471,7 @@ class Ui_MainWindow(object):
 
                 print(response)
                 
-                main_message = response[0] + response[1]
+                main_message = response[0] + '@' + response[1]
                 hashed_data = self.hash_data(main_message)
                 
                 if (hashed_data != response[2]):
@@ -610,9 +610,9 @@ class Ui_MainWindow(object):
     def on_list_widget_item_clicked(self, item):
         print(item.text())
       
-    def hash_data(data):
+    def hash_data(self, data):
         hashed_data = hashlib.sha256(data.encode()).hexdigest()
-        return data + "@" + hashed_data 
+        return hashed_data 
 
 
     def main(self, receiver_ip):
@@ -627,7 +627,7 @@ class Ui_MainWindow(object):
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        client = 1
+        client = 0
         
         if (client):
             chat_socket.connect(receiver)
