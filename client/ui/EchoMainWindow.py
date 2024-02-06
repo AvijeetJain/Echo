@@ -16,7 +16,7 @@ from utils.helpers import (
 
 from utils.types import HeaderCode
 
-SERVER_IP = ""
+SERVER_IP = "192.168..137.254"
 SERVER_ADDR = ()
 CLIENT_IP = get_self_ip()
 
@@ -25,6 +25,7 @@ CLIENT_IP = get_self_ip()
     
 #     def run(self):
 #         while True:
+            
             
 #             print("Heartbeat")
 #             time.sleep(5)
@@ -468,21 +469,27 @@ class Ui_MainWindow(object):
             try:
                 response = client_socket.recv(1024).decode('utf-8')
                 response = response.split('@')
+                response_size = len(response)
 
-                print(response)
+                print(response)    
                 
-                main_message = response[0] + '@' + response[1]
+                main_message = response[0]
+                
+                for res_packet in range (1, response_size - 1):
+                    main_message = main_message + '@' + response[res_packet]
+                
                 hashed_data = self.hash_data(main_message)
                 
-                if (hashed_data != response[2]):
+                if (hashed_data != response[response_size-1]):
                     print("Message has been tampered")
                     self.textEdit.append("Message has been tampered")
                     continue
                 else :
                     print("Message is authentic")
-                    self.textEdit.append("Message is authentic")
                     if response[0] == str(HeaderCode.MESSAGE):
-                        message = response[1]
+                        message=response[2]
+                        for msg_packet in range(3, response_size-1):
+                            message += '@' + response[msg_packet] 
                         self.textEdit.append("Sender: " + message)
                     
                     elif response[0] == str(HeaderCode.FILE_SHARE):
@@ -510,7 +517,7 @@ class Ui_MainWindow(object):
     def send_request(self, client_socket, request, message=None):
         try:
             if(request == HeaderCode.MESSAGE):
-                message = str(request) + '@' + self.plainTextEdit.toPlainText()
+                message = str(request) + '@' + str(host) + '@' + self.plainTextEdit.toPlainText()
                 data = self.hash_data(message)
                 message = message + "@" + data
                 client_socket.send(message.encode('utf-8'))
@@ -519,6 +526,7 @@ class Ui_MainWindow(object):
 
             elif(request == HeaderCode.FILE_SHARE):
                 message = str(request) + '@' + str(host) + "@" + str(message)
+                message = message + '@' + self.hash_data(message)
                 client_socket.send(message.encode('utf-8'))
 
                 
@@ -614,7 +622,13 @@ class Ui_MainWindow(object):
         hashed_data = hashlib.sha256(data.encode()).hexdigest()
         return hashed_data 
 
-
+    def list_online_users(self):
+        client : Client = []
+        
+    
+    def on_user_list_item_clicked(self, item):
+        print(item.text())
+    
     def main(self, receiver_ip):
         global host
         global request_socket
@@ -647,13 +661,15 @@ class Ui_MainWindow(object):
         self.btnSettings.clicked.connect(lambda: self.thread(request_socket))
     
     def init_views(self):
-        self.main('192.168.137.231')
+        self.main('192.168.137.254')
 
         # Clear chat field
         self.textEdit.clear()
 
         # Add data to tree widget
         self.add_data_to_tree(self.filesTree, self.to_json())
+        
+        
     
     def on_click_listeners(self):
         # on tree widget item clicked
@@ -661,6 +677,9 @@ class Ui_MainWindow(object):
 
         # on send message button clicked
         self.pushButton_6.clicked.connect(self.on_send_file_clicked)
+        
+        # on user list item clicked
+        self.usersList.itemClicked.connect(lambda: self.on_user_list_item_clicked(self.usersList.currentItem()))
 
 
 if __name__ == "__main__":
