@@ -552,11 +552,12 @@ class Ui_MainWindow(object):
         for file_path in file_paths[0]:
             file_name = os.path.basename(file_path)
             global request_socket
+
             self.send_request(request_socket, HeaderCode.FILE_SHARE, port_file)
             self.send_file(file_path, port_file)    
 
     def send_file(self, file_path, port_file):
-        file_host = '192.168.137.231'
+        file_host = '192.168.137.1'
 
         file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         file_socket.bind((file_host, port_file))
@@ -614,15 +615,15 @@ class Ui_MainWindow(object):
         return hashed_data 
 
 
-    def main(self):
+    def main(self, receiver_ip):
         global host
         global request_socket
         global port_file
-        host = CLIENT_IP
+        host = '192.168.137.1'
         port_chat = 5555
         port_file = 5556
         
-        receiver = ('192.168.137.1', port_chat)
+        receiver = (receiver_ip, port_chat)
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
@@ -646,7 +647,7 @@ class Ui_MainWindow(object):
         self.btnSettings.clicked.connect(lambda: self.thread(request_socket))
     
     def init_views(self):
-        self.main()
+        self.main('192.168.137.231')
 
         # Clear chat field
         self.textEdit.clear()
