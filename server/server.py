@@ -56,19 +56,30 @@ ip_to_uname: dict[str, str] = {}
 # Mapping from username to last seen timestamp
 uname_to_status: dict[str, float] = {}
 
-def log(message: str, log_type: str = "INFO"):
-    """Utility to log messages to a file.
+# def log(message: str, log_type: str = "INFO"):
+#     """Utility to log messages to a file.
 
-    Parameters
-    ----------
-    message : str
-        Message to be logged.
-    log_type : str, optional
-        Type of the message, by default "INFO".
-    """
-    log_file = logs_dir / "server.log"
-    with open(log_file, "a") as file:
-        file.write(f"[{log_type}] {message}\n")
+#     Parameters
+#     ----------
+#     message : str
+#         Message to be logged.
+#     log_type : str, optional
+#         Type of the message, by default "INFO".
+#     """
+#     log_file = logs_dir / "server.log"
+#     with open(log_file, "a") as file:
+#         file.write(f"[{log_type}] {message}\n")
+
+# Logging configuration
+logging.basicConfig(
+    level=logging.DEBUG,
+    handlers=[
+        logging.FileHandler(
+            f"{str(Path.home())}/.Echo/logs/server_{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.log"
+        ),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
 
 def receive_request(client_socket: socket.socket) -> SocketMessage:
     """Receives incoming requests from peers

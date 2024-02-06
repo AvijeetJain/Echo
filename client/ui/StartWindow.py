@@ -48,6 +48,8 @@ class Ui_StartWindow(object):
         self.retranslateUi(StartWindow)
         QtCore.QMetaObject.connectSlotsByName(StartWindow)
 
+        self.continueButton.clicked.connect(self.on_continueButton_clicked)
+
     def retranslateUi(self, StartWindow):
         _translate = QtCore.QCoreApplication.translate
         StartWindow.setWindowTitle(_translate("StartWindow", "Welcome To Echo"))
@@ -55,6 +57,14 @@ class Ui_StartWindow(object):
         self.usernameEdit.setPlaceholderText(_translate("StartWindow", "Enter Your Username"))
         self.continueButton.setText(_translate("StartWindow", "Continue"))
 
+    def on_continueButton_clicked(self):
+        #open BasicConfigWindow.py and close the current window
+        import BasicConfigWindow
+        basic_config_window = QtWidgets.QMainWindow()
+        basic_config_ui = BasicConfigWindow.Ui_InitialSettingsWindow()
+        basic_config_ui.setupUi(basic_config_window)
+        basic_config_window.show()
+        
 
 if __name__ == "__main__":
     import sys
