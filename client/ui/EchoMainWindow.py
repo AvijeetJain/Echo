@@ -16,7 +16,7 @@ from utils.helpers import (
 
 from utils.types import HeaderCode
 
-SERVER_IP = ""
+SERVER_IP = "192.168..137.254"
 SERVER_ADDR = ()
 CLIENT_IP = get_self_ip()
 
@@ -25,6 +25,7 @@ CLIENT_IP = get_self_ip()
     
 #     def run(self):
 #         while True:
+            
             
 #             print("Heartbeat")
 #             time.sleep(5)
@@ -525,7 +526,7 @@ class Ui_MainWindow(object):
 
             elif(request == HeaderCode.FILE_SHARE):
                 message = str(request) + '@' + str(host) + "@" + str(message)
-                message = message + 'a' + self.hash_data(message)
+                message = message + '@' + self.hash_data(message)
                 client_socket.send(message.encode('utf-8'))
 
                 
@@ -621,7 +622,13 @@ class Ui_MainWindow(object):
         hashed_data = hashlib.sha256(data.encode()).hexdigest()
         return hashed_data 
 
-
+    def list_online_users(self):
+        client : Client = []
+        
+    
+    def on_user_list_item_clicked(self, item):
+        print(item.text())
+    
     def main(self, receiver_ip):
         global host
         global request_socket
@@ -634,7 +641,7 @@ class Ui_MainWindow(object):
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        client = 0
+        client = 1
         
         if (client):
             chat_socket.connect(receiver)
@@ -654,13 +661,15 @@ class Ui_MainWindow(object):
         self.btnSettings.clicked.connect(lambda: self.thread(request_socket))
     
     def init_views(self):
-        self.main('192.168.137.231')
+        self.main('192.168.137.254')
 
         # Clear chat field
         self.textEdit.clear()
 
         # Add data to tree widget
         self.add_data_to_tree(self.filesTree, self.to_json())
+        
+        
     
     def on_click_listeners(self):
         # on tree widget item clicked
@@ -668,6 +677,9 @@ class Ui_MainWindow(object):
 
         # on send message button clicked
         self.pushButton_6.clicked.connect(self.on_send_file_clicked)
+        
+        # on user list item clicked
+        self.usersList.itemClicked.connect(lambda: self.on_user_list_item_clicked(self.usersList.currentItem()))
 
 
 if __name__ == "__main__":
