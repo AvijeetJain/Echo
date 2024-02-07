@@ -1,5 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel
+from PyQt5.QtCore import QMutex
 
 class HeaderCode(Enum):
     ERROR = "e"

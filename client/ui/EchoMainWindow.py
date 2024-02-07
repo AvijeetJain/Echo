@@ -623,11 +623,16 @@ class Ui_MainWindow(object):
         return hashed_data 
 
     def list_online_users(self):
-        client : Client = []
+        client = []
+        # Add 5 sample users to client
+        for i in range(5):
+            client.append("User " + str(i))
+            self.usersList.addItem(client[i])
         
     
     def on_user_list_item_clicked(self, item):
         print(item.text())
+
     
     def main(self, receiver_ip):
         global host
@@ -641,7 +646,7 @@ class Ui_MainWindow(object):
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        client = 1
+        client = 0
         
         if (client):
             chat_socket.connect(receiver)
@@ -661,7 +666,7 @@ class Ui_MainWindow(object):
         self.btnSettings.clicked.connect(lambda: self.thread(request_socket))
     
     def init_views(self):
-        self.main('192.168.137.254')
+        self.main('192.168.137.1')
 
         # Clear chat field
         self.textEdit.clear()

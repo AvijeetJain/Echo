@@ -17,7 +17,7 @@ RECV_FOLDER_PATH = Path.home() / Path("Downloads")
 # Path for storing compression data
 SHARE_COMPRESSED_PATH = Path.home() / Path(".Echo/compressed")
 # Default share folder path
-PUBLIC_FOLDER_PATH = Path.home() / Path(".Echo/share")
+PUBLIC_FOLDER_PATH = Path.home() / Path(".Echo/public")
 # Path for temp storage of incomplete downloads
 TEMP_FOLDER_PATH = Path.home() / Path(".Echo/tmp")
 # Path for storing user settings

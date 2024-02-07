@@ -12,6 +12,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Ui_InitialSettingsWindow(object):
+    def __init__(self, MainWindow):
+        super(Ui_InitialSettingsWindow, self).__init__()
+        self.setupUi(MainWindow)
+
     def setupUi(self, InitialSettingsWindow):
         InitialSettingsWindow.setObjectName("InitialSettingsWindow")
         InitialSettingsWindow.resize(437, 382)
@@ -66,13 +70,3 @@ class Ui_InitialSettingsWindow(object):
         self.folderPathLineEdit.setPlaceholderText(_translate("InitialSettingsWindow", "Enter Public Folder Path"))
         self.discoverFilesButton.setText(_translate("InitialSettingsWindow", "Open"))
         self.continueButton.setText(_translate("InitialSettingsWindow", "Continue"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    InitialSettingsWindow = QtWidgets.QMainWindow()
-    ui = Ui_InitialSettingsWindow()
-    ui.setupUi(InitialSettingsWindow)
-    InitialSettingsWindow.show()
-    sys.exit(app.exec_())
