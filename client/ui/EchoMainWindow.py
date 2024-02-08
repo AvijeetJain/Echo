@@ -16,19 +16,50 @@ from utils.helpers import (
 
 from utils.types import HeaderCode
 
-SERVER_IP = "192.168..137.254"
-SERVER_ADDR = ()
+SERVER_IP = "192.168.137.1"
+SERVER_ADDR = ('192.168.137.1', 1234)
 CLIENT_IP = get_self_ip()
 
-# class HeartbeatWorker():
-#     global SERVER_SOCKET
+class HeartbeatWorker():
+    # global SERVER_SOCKET
+    # SERVER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def list_files_and_empty_folders(self, folder_path):
+        file_list = []
+
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                file_list.append(str(file_path))
+            
+            for folder in dirs:
+                folder_path = os.path.join(root, folder)
+                file_list.append(str(folder_path))
+        return file_list
     
-#     def run(self):
-#         while True:
+    def to_json(self):
+        list = self.list_files_and_empty_folders('./public')
+        tree = {}
+        for path in list:                
+            node = tree                   
+            for level in path.split('\\'): 
+                if level:                 
+                    node = node.setdefault(level, dict())
+        # with open('output.json', 'w') as json_file:
+        #     json.dump(tree, json_file, indent=2)
+        return tree
+    
+    def run(self):
+        while True:
+            print('CONNECTING TO SERVER')
+            SERVER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            SERVER_SOCKET.connect(SERVER_ADDR)
+            print('CONNECTED TO SERVER') 
+            heartbeat = str(HeaderCode.HEARTBEAT) + '@' + CLIENT_IP + '@' + str(self.to_json())
+            heartbeat = heartbeat + '@' + hashlib.sha256(heartbeat.encode()).hexdigest()
+            SERVER_SOCKET.send(heartbeat.encode('utf-8'))
             
-            
-#             print("Heartbeat")
-#             time.sleep(5)
+            print("Heartbeat sent")
+            time.sleep(5)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -565,7 +596,7 @@ class Ui_MainWindow(object):
             self.send_file(file_path, port_file)    
 
     def send_file(self, file_path, port_file):
-        file_host = '192.168.137.1'
+        file_host = '192.168.137.231'
 
         file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         file_socket.bind((file_host, port_file))
@@ -633,11 +664,11 @@ class Ui_MainWindow(object):
         global host
         global request_socket
         global port_file
-        host = '192.168.137.1'
+        host = '192.168.137.231'
         port_chat = 5555
         port_file = 5556
         
-        receiver = (receiver_ip, port_chat)
+        receiver =("192.168.137.1", port_chat)
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
@@ -661,15 +692,15 @@ class Ui_MainWindow(object):
         self.btnSettings.clicked.connect(lambda: self.thread(request_socket))
     
     def init_views(self):
-        self.main('192.168.137.254')
+        self.main('192.168.137.231')
+        
+        # HeartbeatWorker().run()
 
         # Clear chat field
         self.textEdit.clear()
 
         # Add data to tree widget
         self.add_data_to_tree(self.filesTree, self.to_json())
-        
-        
     
     def on_click_listeners(self):
         # on tree widget item clicked
