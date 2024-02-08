@@ -14,8 +14,8 @@ from tinydb import Query, TinyDB
 sys.path.append("./")
 from utils.constants import FMT, HEADER_MSG_LEN, HEADER_TYPE_LEN, SERVER_RECV_PORT, APP_DIR, SERVER_CAPACITY
 from utils.exceptions import ExceptionCode, RequestException
-from utils.helpers import item_search, update_file_hash
-from utils.socket_functions import get_self_ip, recvall
+from utils.helpers import item_search, update_file_hash, get_self_ip
+from utils.socket_functions import recvall
 from utils.types import DBData, DirData, HeaderCode, ItemSearchResult, SocketMessage, UpdateHashParams
 
 app_dir = APP_DIR
@@ -31,7 +31,7 @@ import os
 print(os.getcwd())
 
 # Get IP of the server
-server_ip = get_self_ip()
+server_ip = '192.168.137.1'
 print('Server is hosted at: ',server_ip)
 
 
@@ -45,7 +45,8 @@ server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
 server_socket.bind((server_ip, SERVER_RECV_PORT))
-server_socket.listen(SERVER_CAPACITY)
+print(f"Server is listening at {server_ip}:{SERVER_RECV_PORT}")
+server_socket.listen(1)
 
 # List of connected peers
 sockets_list = [server_socket]
@@ -56,19 +57,30 @@ ip_to_uname: dict[str, str] = {}
 # Mapping from username to last seen timestamp
 uname_to_status: dict[str, float] = {}
 
-def log(message: str, log_type: str = "INFO"):
-    """Utility to log messages to a file.
+# def log(message: str, log_type: str = "INFO"):
+#     """Utility to log messages to a file.
 
-    Parameters
-    ----------
-    message : str
-        Message to be logged.
-    log_type : str, optional
-        Type of the message, by default "INFO".
-    """
-    log_file = logs_dir / "server.log"
-    with open(log_file, "a") as file:
-        file.write(f"[{log_type}] {message}\n")
+#     Parameters
+#     ----------
+#     message : str
+#         Message to be logged.
+#     log_type : str, optional
+#         Type of the message, by default "INFO".
+#     """
+#     log_file = logs_dir / "server.log"
+#     with open(log_file, "a") as file:
+#         file.write(f"[{log_type}] {message}\n")
+
+# Logging configuration
+logging.basicConfig(
+    level=logging.DEBUG,
+    handlers=[
+        logging.FileHandler(
+            f"{str(Path.home())}/.Echo/logs/server_{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.log"
+        ),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
 
 def receive_request(client_socket: socket.socket) -> SocketMessage:
     """Receives incoming requests from peers
@@ -436,10 +448,13 @@ def read_handler(notified_socket: socket.socket):
 
 
 while True:
-    read_sockets: list[socket.socket]
-    exception_sockets: list[socket.socket]
+    request_socket, _ = server_socket.accept()
+    message : str = request_socket.recv(1024).decode('utf-8')
+    print(f"Received message: {message}")
+    # read_sockets: list[socket.socket]
+    # exception_sockets: list[socket.socket]
 
-    # Use the select() system call to get a list of sockets which are ready to read
-    read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 0.1)
-    for notified_socket in read_sockets:
-        read_handler(notified_socket)
+    # # Use the select() system call to get a list of sockets which are ready to read
+    # read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 0.1)
+    # for notified_socket in read_sockets:
+    #     read_handler(notified_socket)

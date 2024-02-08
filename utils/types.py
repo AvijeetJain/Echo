@@ -1,5 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel
+from PyQt5.QtCore import QMutex
 
 class HeaderCode(Enum):
     ERROR = "e"
@@ -111,10 +112,3 @@ class UserSettings(BaseModel):
 class Message(BaseModel):
     sender: str
     content: str
-
-# Client data
-class Client(BaseModel):
-    uname: str
-    ip: str
-    port: int
-    last_seen: float

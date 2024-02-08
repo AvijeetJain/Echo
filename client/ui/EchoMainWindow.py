@@ -406,6 +406,7 @@ class Ui_MainWindow(object):
         self.init_views()
         self.on_click_listeners()
 
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Echo"))
@@ -465,7 +466,8 @@ class Ui_MainWindow(object):
         self.label_9.setText(_translate("MainWindow", "TextLabel"))
         self.label_6.setText(_translate("MainWindow", "TextLabel"))
         self.label_11.setText(_translate("MainWindow", "TextLabel"))
-    
+
+
     def list_files_and_empty_folders(self, folder_path):
         file_list = []
 
@@ -479,6 +481,7 @@ class Ui_MainWindow(object):
                 file_list.append(str(folder_path))
         return file_list
 
+
     def to_json(self):
         list = self.list_files_and_empty_folders('./public')
         tree = {}
@@ -490,10 +493,12 @@ class Ui_MainWindow(object):
         # with open('output.json', 'w') as json_file:
         #     json.dump(tree, json_file, indent=2)
         return tree
-        
+
+
     def thread(self, chat_socket): 
         t1 = threading.Thread(target=self.receive_chat, args=(chat_socket,))
         t1.start()
+
 
     def receive_chat(self,client_socket):
         while True:
@@ -544,7 +549,8 @@ class Ui_MainWindow(object):
 
             except Exception as e:
                 print(f"Error receiving chat message: {e}")
-            
+
+
     def send_request(self, client_socket, request, message=None):
         try:
             if(request == HeaderCode.MESSAGE):
@@ -564,6 +570,7 @@ class Ui_MainWindow(object):
         except Exception as e:
             print(f"Error sending request: {e}")
 
+
     def receive_file(self, client_socket, download_path):
         try:
             file_name = client_socket.recv(1024).decode('utf-8')
@@ -577,6 +584,7 @@ class Ui_MainWindow(object):
             print(f"File received and saved at: {file_path}")
         except Exception as e:
             print(f"Error receiving file: {e}")
+
 
     def on_send_file_clicked(self):
         #Open Qfile dialog to select file/files
@@ -595,8 +603,10 @@ class Ui_MainWindow(object):
             self.send_request(request_socket, HeaderCode.FILE_SHARE, port_file)
             self.send_file(file_path, port_file)    
 
+
     def send_file(self, file_path, port_file):
-        file_host = '192.168.137.231'
+        global host
+        file_host = host
 
         file_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         file_socket.bind((file_host, port_file))
@@ -623,7 +633,8 @@ class Ui_MainWindow(object):
         
         finally:
             file_socket.close()
-            
+
+
     def add_data_to_tree(self, tree_widget, data):
         def add_items(parent_item, items):
             for key, value in items.items():
@@ -643,23 +654,32 @@ class Ui_MainWindow(object):
             top_level_item.setText(0, key)
             add_items(top_level_item, value)
 
+
     def on_tree_item_clicked(self, item, column):
         print(item.text(column))
-    
+
+
     def on_list_widget_item_clicked(self, item):
         print(item.text())
-      
+
+
     def hash_data(self, data):
         hashed_data = hashlib.sha256(data.encode()).hexdigest()
         return hashed_data 
 
+
     def list_online_users(self):
-        client : Client = []
-        
-    
+        client = []
+        # Add 5 sample users to client
+        for i in range(5):
+            client.append("User " + str(i))
+            self.usersList.addItem(client[i])       
+
+
     def on_user_list_item_clicked(self, item):
         print(item.text())
-    
+
+
     def main(self, receiver_ip):
         global host
         global request_socket
@@ -672,7 +692,7 @@ class Ui_MainWindow(object):
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        client = 1
+        client = 0
         
         if (client):
             chat_socket.connect(receiver)
@@ -690,17 +710,18 @@ class Ui_MainWindow(object):
         
         self.pushButton_3.clicked.connect(lambda: self.send_request(request_socket, HeaderCode.MESSAGE))
         self.btnSettings.clicked.connect(lambda: self.thread(request_socket))
-    
+
+
     def init_views(self):
-        self.main('192.168.137.231')
-        
-        # HeartbeatWorker().run()
+        self.main('192.168.137.254')
 
         # Clear chat field
         self.textEdit.clear()
 
         # Add data to tree widget
         self.add_data_to_tree(self.filesTree, self.to_json())
+        
+        
     
     def on_click_listeners(self):
         # on tree widget item clicked

@@ -9,7 +9,7 @@ FMT = "utf-8"
 # Port [client-side] for communication from client to server
 CLIENT_SEND_PORT = 5678
 # Port [client-side] for communication to the client
-CLIENT_RECV_PORT = 4321
+CLIENT_RECV_PORT = 5555
 # App Directory
 APP_DIR = Path.home() / Path(".Echo")
 # Default path for downloads
@@ -17,7 +17,7 @@ RECV_FOLDER_PATH = Path.home() / Path("Downloads")
 # Path for storing compression data
 SHARE_COMPRESSED_PATH = Path.home() / Path(".Echo/compressed")
 # Default share folder path
-PUBLIC_FOLDER_PATH = Path.home() / Path(".Echo/share")
+PUBLIC_FOLDER_PATH = Path.home() / Path(".Echo/public")
 # Path for temp storage of incomplete downloads
 TEMP_FOLDER_PATH = Path.home() / Path(".Echo/tmp")
 # Path for storing user settings
