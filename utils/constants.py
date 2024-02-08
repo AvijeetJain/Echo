@@ -9,7 +9,7 @@ FMT = "utf-8"
 # Port [client-side] for communication from client to server
 CLIENT_SEND_PORT = 5678
 # Port [client-side] for communication to the client
-CLIENT_RECV_PORT = 4321
+CLIENT_RECV_PORT = 5555
 # App Directory
 APP_DIR = Path.home() / Path(".Echo")
 # Default path for downloads
