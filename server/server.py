@@ -46,7 +46,7 @@ server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
 server_socket.bind((server_ip, SERVER_RECV_PORT))
 print(f"Server is listening at {server_ip}:{SERVER_RECV_PORT}")
-server_socket.listen(SERVER_CAPACITY)
+server_socket.listen(1)
 
 # List of connected peers
 sockets_list = [server_socket]
@@ -448,10 +448,13 @@ def read_handler(notified_socket: socket.socket):
 
 
 while True:
-    read_sockets: list[socket.socket]
-    exception_sockets: list[socket.socket]
+    request_socket, _ = server_socket.accept()
+    message : str = request_socket.recv(1024).decode('utf-8')
+    print(f"Received message: {message}")
+    # read_sockets: list[socket.socket]
+    # exception_sockets: list[socket.socket]
 
-    # Use the select() system call to get a list of sockets which are ready to read
-    read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 0.1)
-    for notified_socket in read_sockets:
-        read_handler(notified_socket)
+    # # Use the select() system call to get a list of sockets which are ready to read
+    # read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 0.1)
+    # for notified_socket in read_sockets:
+    #     read_handler(notified_socket)
