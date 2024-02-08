@@ -14,8 +14,8 @@ from tinydb import Query, TinyDB
 sys.path.append("./")
 from utils.constants import FMT, HEADER_MSG_LEN, HEADER_TYPE_LEN, SERVER_RECV_PORT, APP_DIR, SERVER_CAPACITY
 from utils.exceptions import ExceptionCode, RequestException
-from utils.helpers import item_search, update_file_hash
-from utils.socket_functions import get_self_ip, recvall
+from utils.helpers import item_search, update_file_hash, get_self_ip
+from utils.socket_functions import recvall
 from utils.types import DBData, DirData, HeaderCode, ItemSearchResult, SocketMessage, UpdateHashParams
 
 app_dir = APP_DIR
@@ -31,7 +31,7 @@ import os
 print(os.getcwd())
 
 # Get IP of the server
-server_ip = get_self_ip()
+server_ip = '192.168.137.1'
 print('Server is hosted at: ',server_ip)
 
 
@@ -45,6 +45,7 @@ server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
 server_socket.bind((server_ip, SERVER_RECV_PORT))
+print(f"Server is listening at {server_ip}:{SERVER_RECV_PORT}")
 server_socket.listen(SERVER_CAPACITY)
 
 # List of connected peers
