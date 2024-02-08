@@ -11,6 +11,7 @@ class HeaderCode(Enum):
     MESSAGE = "m"
     NEW_CONNECTION = "n"
     REQUEST_IP = "r"
+    HEARTBEAT = "h"
     
 # Compression mode to be used
 class CompressionMethod(Enum):
@@ -110,3 +111,10 @@ class UserSettings(BaseModel):
 class Message(BaseModel):
     sender: str
     content: str
+
+# Client data
+class Client(BaseModel):
+    uname: str
+    ip: str
+    port: int
+    last_seen: float
