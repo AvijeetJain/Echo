@@ -12,7 +12,7 @@ class HeaderCode(Enum):
     MESSAGE = "m"
     NEW_CONNECTION = "n"
     REQUEST_IP = "r"
-    HEARTBEAT_REQUEST = "H"
+    HEARTBEAT = "h"
     
 # Compression mode to be used
 class CompressionMethod(Enum):

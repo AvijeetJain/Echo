@@ -19,19 +19,9 @@ from utils.types import (
     DirProgress
 )
 
-SERVER_IP = "192.168..137.254"
-SERVER_ADDR = ()
+SERVER_IP = "192.168.137.1"
+SERVER_ADDR = ('192.168.137.1', 1234)
 CLIENT_IP = get_self_ip()
-
-# class HeartbeatWorker():
-#     global SERVER_SOCKET
-    
-#     def run(self):
-#         while True:
-            
-            
-#             print("Heartbeat")
-#             time.sleep(5)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -656,11 +646,11 @@ class Ui_MainWindow(object):
         global host
         global request_socket
         global port_file
-        host = '192.168.137.1'
+        host = '192.168.137.231'
         port_chat = 5555
         port_file = 5556
         
-        receiver = (receiver_ip, port_chat)
+        receiver =("192.168.137.1", port_chat)
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
@@ -685,7 +675,7 @@ class Ui_MainWindow(object):
 
 
     def init_views(self):
-        self.main('192.168.137.231')
+        self.main('192.168.137.254')
 
         # Clear chat field
         self.textEdit.clear()
@@ -693,7 +683,8 @@ class Ui_MainWindow(object):
         # Add data to tree widget
         self.add_data_to_tree(self.filesTree, self.to_json())
         
-            
+        
+    
     def on_click_listeners(self):
         # on tree widget item clicked
         self.filesTree.itemClicked.connect(self.on_tree_item_clicked)
