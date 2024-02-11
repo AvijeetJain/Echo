@@ -14,7 +14,10 @@ from utils.helpers import (
     get_self_ip
 )
 
-from utils.types import HeaderCode
+from utils.types import (
+    HeaderCode,
+    DirProgress
+)
 
 SERVER_IP = "192.168..137.254"
 SERVER_ADDR = ()
