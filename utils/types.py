@@ -112,11 +112,3 @@ class UserSettings(BaseModel):
 class Message(BaseModel):
     sender: str
     content: str
-
-
-# Progress data for directory transfer
-class DirProgress(BaseModel):
-    mutex: QMutex
-    current: int
-    total: int
-    status: TransferStatus
