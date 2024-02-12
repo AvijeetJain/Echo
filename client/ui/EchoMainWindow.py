@@ -1,6 +1,3 @@
-import logging
-import pickle
-import shutil
 from PyQt5 import QtCore, QtGui, QtWidgets
 import threading
 import os
@@ -9,215 +6,24 @@ import time
 import hashlib
 import sys
 import socket
-from datetime import datetime
-from io import BufferedReader
 from pathlib import Path
-from pprint import pformat
-from typing import Any, TypedDict
-
-#Import PyQT widgets
-import msgpack
-from notifypy import Notify
-from PyQt5.QtCore import (
-    QCoreApplication,
-    QMetaObject,
-    QMutex,
-    QObject,
-    QRect,
-    QRunnable,
-    QSize,
-    Qt,
-    QThread,
-    QThreadPool,
-    pyqtSignal,
-)
-from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWidgets import (
-    QAbstractItemView,
-    QDialog,
-    QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QLayout,
-    QListWidget,
-    QListWidgetItem,
-    QMessageBox,
-    QPlainTextEdit,
-    QPushButton,
-    QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
-    QTextEdit,
-    QTreeWidget,
-    QTreeWidgetItem,
-    QVBoxLayout,
-    QWidget,
-)
-from client.ui.errorDialog.ShowErrorDialog import show_error_dialog
-from utils.socket_functions import get_self_ip, recvall, request_ip, request_uname, update_share_data
-from requests import RequestException
-from client.service import HeartbeatWorker, ReceiveHandler
-from utils.exceptions import ExceptionCode
-
-
-sys.path.append("./client")
-sys.path.append("./")
-from service.Signals import Signals
-from client.ui.errorDialog.ErrorDialog import Ui_ErrorDialog
-from utils.constants import FMT, HEADER_MSG_LEN, HEADER_TYPE_LEN, SERVER_RECV_PORT
+from PyQt5.QtWidgets import QTreeWidgetItem, QTreeWidget, QFileDialog
 
 sys.path.append('./')
 from utils.helpers import (
-    generate_transfer_progress,
-    get_self_ip,
-    get_unique_filename
+    get_self_ip
 )
 
 from utils.types import (
-    FileMetadata,
     HeaderCode,
-    ProgressBarData,
-    TransferStatus
+    DirProgress
 )
 
 SERVER_IP = "192.168.137.1"
 SERVER_ADDR = ('192.168.137.1', 1234)
 CLIENT_IP = get_self_ip()
 
-
-# Progress data for directory transfer
-class DirProgress(TypedDict):
-    mutex: QMutex
-    current: int
-    total: int
-    status: TransferStatus
-    
-
-class Ui_MainWindow(QWidget):
-    global client_send_socket
-    global client_recv_socket
-    global uname_to_status
-
-    def __init__(self, MainWindow):
-        self.MainWindow = MainWindow
-        super(Ui_MainWindow, self).__init__()
-        try:
-            global user_settings
-            global dir_progress
-            global transfer_progress
-            global progress_widgets
-
-            self.user_settings = MainWindow.user_settings
-            self.signals = Signals()
-
-            # Connect signals
-            self.signals.pause_download.connect(self.pause_download)
-            self.signals.resume_download.connect(self.resume_download)
-
-            user_settings = MainWindow.user_settings
-            try:
-                # Load pickled transfer progress if it exists
-                with (Path.home() / ".Echo/db/transfer_progress.pkl").open(mode="rb") as transfer_progress_dump:
-                    transfer_progress_dump.seek(0)
-                    transfer_progress = pickle.load(transfer_progress_dump)
-            except Exception as e:
-                # Generate the transfer progress if no pickle was created
-                logging.error(msg=f"Failed to load transfer progress from dump: {e}")
-                transfer_progress = generate_transfer_progress()
-                logging.debug(msg=f"Transfer Progress generated\n{pformat(transfer_progress)}")
-            try:
-                # Load pickled dir_progress if it exists
-                with (Path.home() / ".Echo/db/dir_progress.pkl").open(mode="rb") as dir_progress_dump:
-                    dir_progress_dump.seek(0)
-                    dir_progress_readable: dict[Path, DirProgress] = pickle.load(dir_progress_dump)
-                    for path, data in dir_progress_readable.items():
-                        dir_progress[path] = data
-                        dir_progress[path]["mutex"] = QMutex()
-                    logging.debug(msg=f"Dir progress loaded from dump\n{pformat(dir_progress)}")
-            except Exception as e:
-                # TODO: Generate transfer progress for directories
-                logging.error(msg=f"Failed to load dir progress from dump: {e}")
-
-            # Connect to the server given in the settings
-            SERVER_IP = self.user_settings["server_ip"]
-            SERVER_ADDR = (SERVER_IP, SERVER_RECV_PORT)
-            client_send_socket.settimeout(10)
-            client_send_socket.connect(SERVER_ADDR)
-            client_send_socket.settimeout(None)
-
-            # Attempt to register the chosen username
-            self_uname = self.user_settings["uname"]
-            username = self_uname.encode(FMT)
-            username_header = f"{HeaderCode.NEW_CONNECTION.value}{len(username):<{HEADER_MSG_LEN}}".encode(FMT)
-            client_send_socket.send(username_header + username)
-            type = client_send_socket.recv(HEADER_TYPE_LEN).decode(FMT)
-            if type != HeaderCode.NEW_CONNECTION.value:
-                # If the registration fails, receive the error
-                error_len = int(client_send_socket.recv(HEADER_MSG_LEN).decode(FMT).strip())
-                error = client_send_socket.recv(error_len)
-                exception: RequestException = msgpack.unpackb(error, object_hook=RequestException.from_dict, raw=False)
-                if exception.code == ExceptionCode.USER_EXISTS:
-                    logging.error(msg=exception.msg)
-                    show_error_dialog("Sorry that username is taken, please choose another one", True)
-                else:
-                    logging.fatal(msg=exception.msg)
-                    print("\nSorry something went wrong")
-                    client_send_socket.close()
-                    client_recv_socket.close()
-                    MainWindow.close()
-
-            # Send share data to the server
-            update_share_data(Path(self.user_settings["share_folder_path"]), client_send_socket)
-
-            # Spawn heartbeat worker in its own thread
-            self.heartbeat_thread = QThread()
-            self.heartbeat_worker = HeartbeatWorker()
-            self.heartbeat_worker.moveToThread(self.heartbeat_thread)
-            self.heartbeat_thread.started.connect(self.heartbeat_worker.run)
-            self.heartbeat_worker.update_status.connect(self.update_online_status)
-            self.heartbeat_thread.start(QThread.LowestPriority)  # type: ignore
-
-            # self.save_progress_thread = QThread()
-            # self.save_progress_worker = SaveProgressWorker()
-            # self.save_progress_worker.moveToThread(self.save_progress_thread)
-            # self.save_progress_thread.started.connect(self.save_progress_worker.run)
-            # self.save_progress_thread.start(QThread.LowestPriority) # type: ignore
-
-            self.receive_thread = QThread()
-            self.receive_worker = ReceiveHandler()
-            self.receive_worker.moveToThread(self.receive_thread)
-            self.receive_thread.started.connect(self.receive_worker.run)  # type: ignore
-            self.receive_worker.message_received.connect(self.messages_controller)
-            self.receive_worker.file_incoming.connect(self.direct_transfer_controller)
-            self.receive_thread.start(QThread.HighestPriority)  # type: ignore
-
-        except Exception as e:
-            logging.error(f"Could not connect to server: {e}")
-            sys.exit(
-                show_error_dialog(
-                    f"Could not connect to server: {e}\n\
-                    \nEnsure that the server is online and you have entered the correct server IP.",
-                    True,
-                )
-            )
-
-        self.setupUi(MainWindow)
-
-        try:
-            with (Path.home() / ".Echo/db/progress_widgets.pkl").open(mode="rb") as progress_widgets_dump:
-                progress_widgets_dump.seek(0)
-                progress_widgets_readable: dict[Path, ProgressBarData] = pickle.load(progress_widgets_dump)
-                for path, data in progress_widgets_readable.items():
-                    self.new_file_progress((path, data["total"], True))
-                    progress_widgets[path].ui.update_progress(data["current"])
-                    progress_widgets[path].ui.btn_Toggle.setText("▶")
-                    progress_widgets[path].ui.paused = True
-                logging.debug(msg=f"Progress widgets loaded from dump\n{pformat(progress_widgets)}")
-        except Exception as e:
-            # Fallback if no dump was created
-            logging.error(msg=f"Failed to load progress widgets from dump: {e}")
-            # TODO: Generate transfer progress for progress widgets
-            
+class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1090, 761)
@@ -869,7 +675,7 @@ class Ui_MainWindow(QWidget):
 
 
     def init_views(self):
-        # self.main('192.168.137.254')
+        self.main('192.168.137.254')
 
         # Clear chat field
         self.textEdit.clear()
