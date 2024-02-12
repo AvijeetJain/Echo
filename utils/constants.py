@@ -9,15 +9,13 @@ FMT = "utf-8"
 # Port [client-side] for communication from client to server
 CLIENT_SEND_PORT = 5678
 # Port [client-side] for communication to the client
-CLIENT_RECV_PORT = 5555
-# App Directory
-APP_DIR = Path.home() / Path(".Echo")
+CLIENT_RECV_PORT = 4321
 # Default path for downloads
 RECV_FOLDER_PATH = Path.home() / Path("Downloads")
 # Path for storing compression data
 SHARE_COMPRESSED_PATH = Path.home() / Path(".Echo/compressed")
 # Default share folder path
-PUBLIC_FOLDER_PATH = Path.home() / Path(".Echo/public")
+SHARE_FOLDER_PATH = Path.home() / Path(".Echo/share")
 # Path for temp storage of incomplete downloads
 TEMP_FOLDER_PATH = Path.home() / Path(".Echo/tmp")
 # Path for storing user settings
@@ -38,8 +36,6 @@ MESSAGE_MAX_LEN = 256
 ONLINE_TIMEOUT = 10  # seconds
 # Time gap between heartbeats
 HEARTBEAT_TIMER = 5  # seconds
-# Number of peers
-SERVER_CAPACITY = 10
 # Message area prefix html
 LEADING_HTML = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
 <html>
