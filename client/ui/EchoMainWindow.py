@@ -57,7 +57,7 @@ from PyQt5.QtWidgets import (
 sys.path.append("./client")
 sys.path.append("./")
 from requests import RequestException
-from client.service import HeartbeatWorker, ReceiveHandler
+from client.service import HeartbeatWorker
 from client.ui.errorDialog.ShowErrorDialog import show_error_dialog
 from utils.exceptions import ExceptionCode
 
@@ -747,11 +747,14 @@ class Ui_MainWindow(QObject):
 
     def on_send_file_clicked(self):
         #Open Qfile dialog to select file/files
+
         global port_file
+        print('port_file :',port_file)
         file_paths = QFileDialog.getOpenFileNames(
             self, 
             "Select Files",
-            str(Path.home()))
+            str(Path.home()),
+            "All Files (*)")
 
         print('file_path :',file_paths)
 
@@ -870,9 +873,6 @@ class Ui_MainWindow(QObject):
         self.pushButton_3.clicked.connect(lambda: self.send_request(request_socket, HeaderCode.MESSAGE))
         self.btnSettings.clicked.connect(lambda: self.thread(request_socket))
 
-        # on send message button clicked
-        self.pushButton_6.clicked.connect(self.on_send_file_clicked)
-
 
     def init_views(self):
         self.main('192.168.137.231')
@@ -890,6 +890,9 @@ class Ui_MainWindow(QObject):
         
         # on user list item clicked
         self.usersList.itemClicked.connect(lambda: self.on_user_list_item_clicked(self.usersList.currentItem()))
+
+        # on send message button clicked
+        self.pushButton_6.clicked.connect(lambda: self.on_send_file_clicked())
 
 
 if __name__ == "__main__":

@@ -2,9 +2,9 @@ import hashlib
 import os
 import socket
 import time
-from client.main import CLIENT_IP
+# from client.main import CLIENT_IP
 
-from client.ui.EchoMainWindow import SERVER_ADDR
+from client.ui.EchoMainWindow import CLIENT_IP, SERVER_ADDR
 from utils.constants import HEARTBEAT_TIMER
 from utils.types import HeaderCode
 
