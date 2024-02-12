@@ -219,7 +219,8 @@ class Ui_MainWindow(QObject):
                 # Fallback if no dump was created
                 logging.error(msg=f"Failed to load progress widgets from dump: {e}")
                 # TODO: Generate transfer progress for progress widgets
-            
+
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1090, 761)
@@ -748,7 +749,7 @@ class Ui_MainWindow(QObject):
         #Open Qfile dialog to select file/files
         global port_file
         file_paths = QFileDialog.getOpenFileNames(
-            None, 
+            self, 
             "Select Files",
             str(Path.home()))
 
@@ -842,11 +843,11 @@ class Ui_MainWindow(QObject):
         global host
         global request_socket
         global port_file
-        host = '192.168.137.231'
+        host = '192.168.137.1'
         port_chat = 5555
         port_file = 5556
         
-        receiver =("192.168.137.1", port_chat)
+        receiver =(receiver_ip, port_chat)
 
         chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
@@ -869,9 +870,12 @@ class Ui_MainWindow(QObject):
         self.pushButton_3.clicked.connect(lambda: self.send_request(request_socket, HeaderCode.MESSAGE))
         self.btnSettings.clicked.connect(lambda: self.thread(request_socket))
 
+        # on send message button clicked
+        self.pushButton_6.clicked.connect(self.on_send_file_clicked)
+
 
     def init_views(self):
-        # self.main('192.168.137.254')
+        self.main('192.168.137.231')
 
         # Clear chat field
         self.textEdit.clear()
@@ -883,9 +887,6 @@ class Ui_MainWindow(QObject):
     def on_click_listeners(self):
         # on tree widget item clicked
         self.filesTree.itemClicked.connect(self.on_tree_item_clicked)
-
-        # on send message button clicked
-        self.pushButton_6.clicked.connect(self.on_send_file_clicked)
         
         # on user list item clicked
         self.usersList.itemClicked.connect(lambda: self.on_user_list_item_clicked(self.usersList.currentItem()))
