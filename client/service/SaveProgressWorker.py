@@ -2,13 +2,14 @@ import logging
 import pickle
 import time
 from pathlib import Path
-from discord import Object
+from typing import Any
+from PyQt5.QtCore import QObject
 
 # Import utilities
 from utils.types import ProgressBarData, TransferStatus
 
 
-class SaveProgressWorker(Object):
+class SaveProgressWorker(QObject):
     """A worker that periodically saves the download progress and statuses to a file
 
     Methods
@@ -33,12 +34,12 @@ class SaveProgressWorker(Object):
                 transfer_progress[path]["status"] = TransferStatus.PAUSED
 
         # Pickle the transfer_progress dictionary
-        with (Path.home() / ".Drizzle/db/transfer_progress.pkl").open(mode="wb") as transfer_progress_dump:
+        with (Path.home() / ".Echo/db/transfer_progress.pkl").open(mode="wb") as transfer_progress_dump:
             logging.debug(msg="Created transfer progress dump")
             pickle.dump(transfer_progress, transfer_progress_dump)
 
         # Pickle the dir_progress dictionary
-        with (Path.home() / ".Drizzle/db/dir_progress.pkl").open(mode="wb") as dir_progress_dump:
+        with (Path.home() / ".Echo/db/dir_progress.pkl").open(mode="wb") as dir_progress_dump:
             logging.debug(msg="Created dir progress dump")
             dir_progress_writeable: dict[Path, Any] = {}
             for path in dir_progress.keys():
@@ -52,7 +53,7 @@ class SaveProgressWorker(Object):
             pickle.dump(dir_progress_writeable, dir_progress_dump)
 
         # Pickle the progress_widgets dictionary
-        with (Path.home() / ".Drizzle/db/progress_widgets.pkl").open(mode="wb") as progress_widgets_dump:
+        with (Path.home() / ".Echo/db/progress_widgets.pkl").open(mode="wb") as progress_widgets_dump:
             progress_widgets_writeable: dict[Path, ProgressBarData] = {}
             for path, widget in progress_widgets.items():
                 progress_widgets_writeable[path] = {

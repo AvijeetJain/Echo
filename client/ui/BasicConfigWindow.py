@@ -13,9 +13,21 @@ import logging
 import sys
 from pathlib import Path
 
+
 # Imports (PyPI)
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtCore import QCoreApplication, QMetaObject
+from PyQt5.QtWidgets import (
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QSizePolicy,
+    QSpacerItem,
+    QVBoxLayout,
+    QWidget,
+)
+
 
 # Imports (utilities)
 from utils.constants import USER_SETTINGS_PATH
@@ -23,69 +35,88 @@ from utils.constants import USER_SETTINGS_PATH
 # Import the main window
 from ui.EchoMainWindow import Ui_MainWindow
 
-class Ui_InitialSettingsWindow(object):
+class Ui_InitialSettingsWindow(QWidget):
     def __init__(self, MainWindow):
         super(Ui_InitialSettingsWindow, self).__init__()
         self.setupUi(MainWindow)
 
-    def setupUi(self, InitialSettingsWindow):
-        InitialSettingsWindow.setObjectName("InitialSettingsWindow")
-        InitialSettingsWindow.resize(437, 382)
-        self.centralwidget = QtWidgets.QWidget(InitialSettingsWindow)
+    def setupUi(self, MainWindow) -> None:
+        if not MainWindow.objectName():
+            MainWindow.setObjectName("InitialSettingsWindow")
+        MainWindow.resize(422, 299)
+        self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem)
-        self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setContentsMargins(30, -1, 30, -1)
+        self.verticalSpacer_4 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.verticalLayout_2.addItem(self.verticalSpacer_4)
+
+        self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        self.serverIPLabel = QtWidgets.QLabel(self.centralwidget)
-        self.serverIPLabel.setObjectName("serverIPLabel")
-        self.verticalLayout.addWidget(self.serverIPLabel)
-        self.serverLineEdit = QtWidgets.QLineEdit(self.centralwidget)
-        self.serverLineEdit.setObjectName("serverLineEdit")
-        self.verticalLayout.addWidget(self.serverLineEdit)
-        spacerItem1 = QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        self.verticalLayout.addItem(spacerItem1)
-        self.pathLabel = QtWidgets.QLabel(self.centralwidget)
-        self.pathLabel.setObjectName("pathLabel")
-        self.verticalLayout.addWidget(self.pathLabel)
-        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.verticalLayout.setContentsMargins(30, -1, 30, -1)
+        self.label = QLabel(self.centralwidget)
+        self.label.setObjectName("label")
+
+        self.verticalLayout.addWidget(self.label)
+
+        self.le_serverIp = QLineEdit(self.centralwidget)
+        self.le_serverIp.setObjectName("lineEdit")
+
+        self.verticalLayout.addWidget(self.le_serverIp)
+
+        self.label_2 = QLabel(self.centralwidget)
+        self.label_2.setObjectName("label_2")
+
+        self.verticalLayout.addWidget(self.label_2)
+
+        self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.folderPathLineEdit = QtWidgets.QLineEdit(self.centralwidget)
-        self.folderPathLineEdit.setObjectName("folderPathLineEdit")
-        self.horizontalLayout.addWidget(self.folderPathLineEdit)
-        self.discoverFilesButton = QtWidgets.QPushButton(self.centralwidget)
-        self.discoverFilesButton.setObjectName("discoverFilesButton")
-        self.horizontalLayout.addWidget(self.discoverFilesButton)
+        self.le_sharePath = QLineEdit(self.centralwidget)
+        self.le_sharePath.setObjectName("lineEdit_2")
+
+        self.horizontalLayout.addWidget(self.le_sharePath)
+
+        self.btn_SelectSharePath = QPushButton(self.centralwidget)
+        self.btn_SelectSharePath.setObjectName("pushButton")
+        self.btn_SelectSharePath.clicked.connect(self.open_dir_picker)  # type: ignore
+
+        self.horizontalLayout.addWidget(self.btn_SelectSharePath)
+
         self.verticalLayout.addLayout(self.horizontalLayout)
-        spacerItem2 = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        self.verticalLayout.addItem(spacerItem2)
-        self.continueButton = QtWidgets.QPushButton(self.centralwidget)
-        self.continueButton.setObjectName("continueButton")
-        self.verticalLayout.addWidget(self.continueButton)
+
+        self.btn_submit = QPushButton(self.centralwidget)
+        self.btn_submit.setObjectName("pushButton_2")
+        self.btn_submit.clicked.connect(lambda: self.on_submit(MainWindow))  # type: ignore
+
+        self.verticalLayout.addWidget(self.btn_submit)
+
         self.verticalLayout_2.addLayout(self.verticalLayout)
-        spacerItem3 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem3)
-        InitialSettingsWindow.setCentralWidget(self.centralwidget)
 
-        self.retranslateUi(InitialSettingsWindow)
-        QtCore.QMetaObject.connectSlotsByName(InitialSettingsWindow)
+        self.verticalSpacer_3 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
-        self.on_click_listeners(InitialSettingsWindow)
+        self.verticalLayout_2.addItem(self.verticalSpacer_3)
 
-    def retranslateUi(self, InitialSettingsWindow):
-        _translate = QtCore.QCoreApplication.translate
-        InitialSettingsWindow.setWindowTitle(_translate("InitialSettingsWindow", "Basic Details"))
-        self.serverIPLabel.setText(_translate("InitialSettingsWindow", "Server IP"))
-        self.serverLineEdit.setPlaceholderText(_translate("InitialSettingsWindow", "Enter Server IP"))
-        self.pathLabel.setText(_translate("InitialSettingsWindow", "Public Folder Path"))
-        self.folderPathLineEdit.setPlaceholderText(_translate("InitialSettingsWindow", "Enter Public Folder Path"))
-        self.discoverFilesButton.setText(_translate("InitialSettingsWindow", "Open"))
-        self.continueButton.setText(_translate("InitialSettingsWindow", "Continue"))
+        MainWindow.setCentralWidget(self.centralwidget)
 
-    def continue_button_clicked(self, MainWindow) -> None:
+        self.retranslateUi(MainWindow)
+
+        QMetaObject.connectSlotsByName(MainWindow)
+
+    def retranslateUi(self, MainWindow) -> None:
+        MainWindow.setWindowTitle(QCoreApplication.translate("InitialSettingsWindow", "Basic Details", None))
+        self.label.setText(QCoreApplication.translate("InitialSettingsWindow", "Server IP", None))
+        self.le_serverIp.setPlaceholderText(
+            QCoreApplication.translate("InitialSettingsWindow", "Enter Server IP", None)
+        )
+        self.label_2.setText(QCoreApplication.translate("InitialSettingsWindow", "Share Folder Path", None))
+        self.le_sharePath.setPlaceholderText(
+            QCoreApplication.translate("InitialSettingsWindow", "Enter Share Folder Path", None)
+        )
+        self.btn_SelectSharePath.setText(QCoreApplication.translate("InitialSettingsWindow", "Open", None))
+        self.btn_submit.setText(QCoreApplication.translate("InitialSettingsWindow", "Continue", None))
+
+    def on_submit(self, MainWindow) -> None:
         """Loads the entered values into the settings and stores them in the settings.json file
 
         Parameters
@@ -95,8 +126,8 @@ class Ui_InitialSettingsWindow(object):
         """
 
         # Get entered values
-        MainWindow.user_settings["server_ip"] = self.serverIPLabel.text()
-        MainWindow.user_settings["share_folder_path"] = self.folderPathLineEdit.text()
+        MainWindow.user_settings["server_ip"] = self.le_serverIp.text()
+        MainWindow.user_settings["share_folder_path"] = self.le_sharePath.text()
         try:
             # Store the settings in the settings.json file
             with USER_SETTINGS_PATH.open(mode="w") as user_settings_file:
@@ -104,17 +135,14 @@ class Ui_InitialSettingsWindow(object):
 
             # Open the main window
             MainWindow.ui = Ui_MainWindow(MainWindow)
-            # self.close()
+            self.close()
         except Exception as e:
             logging.error(f"Could not save User Config: {e}")
-            # self.close()
+            self.close()
 
     def open_dir_picker(self) -> None:
         """Opens the directory picker to choose a share folder"""
 
-        path = QFileDialog.getExistingDirectory(self, "Select Share Folder", str(Path.home()), QFileDialog.ShowDirsOnly)
+        # path = QFileDialog.getExistingDirectory(self, "Select Share Folder", str(Path.home()), QFileDialog.ShowDirsOnly)
+        path = QFileDialog.getExistingDirectory(self, "Select Public Folder", str(Path.home()), QFileDialog.ShowDirsOnly)
         self.le_sharePath.setText(path)
-
-    def on_click_listeners(self, MainWindow):
-        self.discoverFilesButton.clicked.connect(self.open_dir_picker)
-        self.continueButton.clicked.connect(lambda: self.continue_button_clicked(MainWindow))
