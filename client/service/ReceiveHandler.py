@@ -17,8 +17,7 @@ from utils.constants import FILE_BUFFER_LEN, FMT, HEADER_MSG_LEN, HEADER_TYPE_LE
 from utils.exceptions import ExceptionCode
 from utils.helpers import get_unique_filename, path_to_dict
 from utils.socket_functions import recvall
-from utils.types import FileMetadata, FileRequest, HeaderCode
-from utils.socket_functions import recvall, request_ip, request_uname, update_share_data
+from utils.types import FileMetadata, FileRequest, HeaderCode, Message
 
 class ReceiveHandler(QObject):
     """A worker that handles incoming packets sent by connected peers
